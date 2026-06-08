@@ -134,7 +134,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     },
                   ),
                   BottomNavIcon(
-                    icon: Icons.grid_view_rounded,
+                    icon: Icons.receipt_long_rounded,
                     selected: false,
                     onTap: () {
                       Navigator.of(context).pushReplacement(
@@ -143,7 +143,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     },
                   ),
                   BottomNavIcon(
-                    icon: Icons.person_rounded,
+                    icon: Icons.account_circle_rounded,
                     selected: false,
                     onTap: () {
                       Navigator.of(context).pushReplacement(

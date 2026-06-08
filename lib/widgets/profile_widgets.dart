@@ -11,6 +11,7 @@ import '../providers/profile_provider.dart';
 import '../services/auth_service.dart';
 import 'common_widgets.dart';
 import 'home_widgets.dart';
+import 'photo_source_sheet.dart';
 
 class ProfileShell extends StatefulWidget {
   const ProfileShell({
@@ -68,6 +69,11 @@ class _ProfileShellState extends State<ProfileShell> {
           child: Column(
             children: [
               const HomeHeader(),
+              if (profileProvider.loading && hasCachedUser)
+                const SizedBox(
+                  height: 2,
+                  child: LinearProgressIndicator(color: AppColors.gold),
+                ),
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 240),
@@ -124,19 +130,6 @@ class ProfileBody extends StatelessWidget {
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(42, 38, 42, 24),
       children: [
-        if (refreshing) ...[
-          const Center(
-            child: SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.gold,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
         Center(
           child: ClipOval(
             child: photo == null || photo.isEmpty
@@ -323,8 +316,10 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
 
   Future<void> _pickPhoto() async {
     try {
+      final source = await showPhotoSourceSheet(context, title: 'Foto Profil');
+      if (source == null) return;
       final image = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 900,
         imageQuality: 86,
       );

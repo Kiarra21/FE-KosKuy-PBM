@@ -101,7 +101,6 @@ class OwnerRoomService {
     required int roomTypeId,
     required int number,
     required bool isActive,
-    required bool isFilled,
   }) async {
     final response = await _json(
       'POST',
@@ -110,7 +109,6 @@ class OwnerRoomService {
         'room_type_id': roomTypeId,
         'number': number,
         'is_active': isActive,
-        'is_filled': isFilled,
       },
     );
     return ManagedRoom.fromJson(_data(response));
@@ -121,7 +119,6 @@ class OwnerRoomService {
     required int roomTypeId,
     required int number,
     required bool isActive,
-    required bool isFilled,
   }) async {
     final response = await _json(
       'PUT',
@@ -130,7 +127,6 @@ class OwnerRoomService {
         'room_type_id': roomTypeId,
         'number': number,
         'is_active': isActive,
-        'is_filled': isFilled,
       },
     );
     return ManagedRoom.fromJson(_data(response));

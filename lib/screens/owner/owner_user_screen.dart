@@ -19,6 +19,7 @@ class OwnerUserScreen extends StatefulWidget {
 
 class _OwnerUserScreenState extends State<OwnerUserScreen> {
   final _searchController = TextEditingController();
+  String _selectedRole = 'all';
   bool _loading = true;
   List<ManagedUser> _items = const [];
 
@@ -38,6 +39,7 @@ class _OwnerUserScreenState extends State<OwnerUserScreen> {
     setState(() => _loading = true);
     try {
       final items = await context.read<OwnerUserProvider>().fetchUsers(
+        role: _selectedRole == 'all' ? null : _selectedRole,
         search: _searchController.text.trim(),
       );
       if (!mounted) return;
@@ -150,6 +152,46 @@ class _OwnerUserScreenState extends State<OwnerUserScreen> {
                           borderSide: BorderSide.none,
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedRole,
+                      dropdownColor: AppColors.white,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.filter_list_rounded),
+                        filled: true,
+                        fillColor: const Color(0xFFF0F1F4),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'all',
+                          child: Text('Semua User'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'pemilik_kos',
+                          child: Text('Pemilik Kos'),
+                        ),
+                        DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                        DropdownMenuItem(
+                          value: 'customer',
+                          child: Text('Customer'),
+                        ),
+                      ],
+                      onChanged: _loading
+                          ? null
+                          : (value) {
+                              if (value == null) return;
+                              setState(() => _selectedRole = value);
+                              _fetch();
+                            },
                     ),
                   ],
                 ),

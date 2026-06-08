@@ -14,6 +14,7 @@ import '../../routes/slide_page_route.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/photo_source_sheet.dart';
 import 'owner_bottom_nav.dart';
 import 'owner_room_detail_screen.dart';
 
@@ -34,7 +35,9 @@ class _OwnerRoomScreenState extends State<OwnerRoomScreen> {
   @override
   void initState() {
     super.initState();
-    _fetch();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetch();
+    });
   }
 
   Future<void> _fetch() async {
@@ -77,8 +80,10 @@ class _OwnerRoomScreenState extends State<OwnerRoomScreen> {
 
   Future<void> _uploadPhoto(ManagedRoomType item) async {
     final roomProvider = context.read<OwnerRoomProvider>();
+    final source = await showPhotoSourceSheet(context, title: 'Foto Kamar');
+    if (source == null) return;
     final image = await _picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
       maxWidth: 1400,
       imageQuality: 88,
     );
@@ -90,6 +95,7 @@ class _OwnerRoomScreenState extends State<OwnerRoomScreen> {
         filename: image.name.isEmpty ? 'room.jpg' : image.name,
       );
       _message('Foto kamar berhasil ditambahkan.');
+      return;
     } on AuthException catch (error) {
       _message(error.message);
     }
@@ -105,9 +111,12 @@ class _OwnerRoomScreenState extends State<OwnerRoomScreen> {
       builder: (context) {
         return OwnerRoomPhotosSheet(
           photos: photos,
-          onUpload: () {
+          onUpload: () async {
             Navigator.of(context).pop();
-            _uploadPhoto(item);
+            await _uploadPhoto(item);
+            if (mounted) {
+              _managePhotos(item);
+            }
           },
           onDelete: (photo) async {
             Navigator.of(context).pop();
@@ -475,17 +484,27 @@ class _OwnerRoomTypeFormSheetState extends State<OwnerRoomTypeFormSheet> {
   final _number = TextEditingController();
   late bool _active = widget.item?.isActive ?? true;
   bool _roomActive = true;
-  bool _roomFilled = false;
   late final Set<int> _facilityIds = {...?widget.item?.facilityIds};
+  final List<ManagedRoomPhoto> _existingPhotos = [];
   final List<_PendingRoomPhoto> _photos = [];
   List<FacilityItem> _facilities = const [];
   bool _loading = false;
   bool _loadingFacilities = true;
+  bool _loadingPhotos = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchFacilities();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetchInitialData();
+    });
+  }
+
+  Future<void> _fetchInitialData() async {
+    await _fetchFacilities();
+    if (widget.item != null && mounted) {
+      await _fetchExistingPhotos();
+    }
   }
 
   Future<void> _fetchFacilities() async {
@@ -514,15 +533,56 @@ class _OwnerRoomTypeFormSheetState extends State<OwnerRoomTypeFormSheet> {
     }
   }
 
+  Future<void> _fetchExistingPhotos() async {
+    final item = widget.item;
+    if (item == null) return;
+    setState(() => _loadingPhotos = true);
+    try {
+      final photos = await context.read<OwnerRoomProvider>().fetchRoomTypePhotos(
+        item.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _existingPhotos
+          ..clear()
+          ..addAll(photos);
+      });
+    } on AuthException catch (error) {
+      _message(error.message);
+    } finally {
+      if (mounted) setState(() => _loadingPhotos = false);
+    }
+  }
+
   Future<void> _pickPhotos() async {
     try {
-      final images = await _picker.pickMultiImage(
-        maxWidth: 1400,
-        imageQuality: 88,
-      );
-      if (images.isEmpty) return;
       final photos = <_PendingRoomPhoto>[];
-      for (final image in images) {
+      final source = await showPhotoSourceSheet(
+        context,
+        title: 'Foto Tipe Kamar',
+      );
+      if (source == null) return;
+      if (source == ImageSource.gallery) {
+        final images = await _picker.pickMultiImage(
+          maxWidth: 1400,
+          imageQuality: 88,
+        );
+        if (images.isEmpty) return;
+        for (final image in images) {
+          photos.add(
+            _PendingRoomPhoto(
+              bytes: await image.readAsBytes(),
+              filename: image.name.isEmpty ? 'room.jpg' : image.name,
+            ),
+          );
+        }
+      } else {
+        final image = await _picker.pickImage(
+          source: ImageSource.camera,
+          maxWidth: 1400,
+          imageQuality: 88,
+        );
+        if (image == null) return;
         photos.add(
           _PendingRoomPhoto(
             bytes: await image.readAsBytes(),
@@ -576,7 +636,6 @@ class _OwnerRoomTypeFormSheetState extends State<OwnerRoomTypeFormSheet> {
           roomTypeId: savedItem.id,
           number: firstRoomNumber!,
           isActive: _roomActive,
-          isFilled: _roomFilled,
         );
       } else {
         savedItem = await roomProvider.updateRoomType(
@@ -691,15 +750,16 @@ class _OwnerRoomTypeFormSheetState extends State<OwnerRoomTypeFormSheet> {
                     ),
                     onChanged: (value) => setState(() => _roomActive = value),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: _roomFilled,
-                    activeThumbColor: AppColors.gold,
-                    title: const Text(
-                      'Unit Sudah Terisi',
-                      style: TextStyle(color: AppColors.white),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Status kosong atau terisi otomatis dari booking.',
+                      style: TextStyle(
+                        color: AppColors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    onChanged: (value) => setState(() => _roomFilled = value),
                   ),
                 ],
                 const Align(
@@ -772,15 +832,55 @@ class _OwnerRoomTypeFormSheetState extends State<OwnerRoomTypeFormSheet> {
                     ),
                   ],
                 ),
-                if (_photos.isEmpty)
+                if (_loadingPhotos)
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.gold,
+                      ),
+                    ),
+                  )
+                else if (_existingPhotos.isNotEmpty) ...[
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Belum ada foto baru dipilih.',
-                      style: TextStyle(color: AppColors.white),
+                      'Foto tersimpan',
+                      style: TextStyle(
+                        color: AppColors.gold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                  )
-                else
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 68,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _existingPhotos.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 7),
+                      itemBuilder: (context, index) {
+                        final photo = _existingPhotos[index];
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(7),
+                          child: Image.network(
+                            photo.url,
+                            width: 68,
+                            height: 68,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (_photos.isNotEmpty)
                   SizedBox(
                     height: 68,
                     child: ListView.separated(

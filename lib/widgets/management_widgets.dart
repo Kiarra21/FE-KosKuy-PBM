@@ -89,7 +89,7 @@ class RoomOccupancyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? 40 : 50,
+      height: compact ? 44 : 54,
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 8 : 12,
         vertical: compact ? 5 : 7,
@@ -100,7 +100,7 @@ class RoomOccupancyTile extends StatelessWidget {
         border: Border.all(color: AppColors.gold, width: 2),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
@@ -158,39 +158,41 @@ class ManagementActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.navy,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: AppColors.navy,
         borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Container(
-          height: 92,
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Row(
-            children: [
-              Icon(icon, color: AppColors.gold, size: 52),
-              const SizedBox(width: 22),
-              Expanded(
-                child: Container(
-                  height: 42,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColors.gold, width: 2),
-                  ),
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            height: 92,
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Row(
+              children: [
+                Icon(icon, color: AppColors.gold, size: 52),
+                const SizedBox(width: 22),
+                Expanded(
+                  child: Container(
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: AppColors.gold, width: 2),
+                    ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

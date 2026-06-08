@@ -22,7 +22,6 @@ class OwnerRoomFormScreen extends StatefulWidget {
 class _OwnerRoomFormScreenState extends State<OwnerRoomFormScreen> {
   late final _number = TextEditingController(text: widget.room?.number);
   late bool _active = widget.room?.isActive ?? true;
-  late bool _filled = widget.room?.isFilled ?? false;
   bool _loading = false;
 
   bool get _editing => widget.room != null;
@@ -47,7 +46,6 @@ class _OwnerRoomFormScreenState extends State<OwnerRoomFormScreen> {
           roomTypeId: widget.roomType.id,
           number: number,
           isActive: _active,
-          isFilled: _filled,
         );
       } else {
         await context.read<OwnerRoomProvider>().updateRoom(
@@ -55,7 +53,6 @@ class _OwnerRoomFormScreenState extends State<OwnerRoomFormScreen> {
           roomTypeId: widget.roomType.id,
           number: number,
           isActive: _active,
-          isFilled: _filled,
         );
       }
       if (!mounted) return;
@@ -130,16 +127,37 @@ class _OwnerRoomFormScreenState extends State<OwnerRoomFormScreen> {
                             onChanged: (value) =>
                                 setState(() => _active = value),
                           ),
-                          const SizedBox(height: 10),
-                          const _FormLabel('Status Hunian'),
-                          const SizedBox(height: 6),
-                          _BooleanControl(
-                            value: _filled,
-                            falseLabel: 'Kosong',
-                            trueLabel: 'Ditempati',
-                            onChanged: (value) =>
-                                setState(() => _filled = value),
-                          ),
+                          if (_editing) ...[
+                            const SizedBox(height: 10),
+                            const _FormLabel('Status Dari Booking'),
+                            const SizedBox(height: 6),
+                            Container(
+                              height: 36,
+                              width: double.infinity,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: widget.room!.isFilled
+                                    ? Colors.green
+                                    : AppColors.white,
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(
+                                  color: widget.room!.isFilled
+                                      ? Colors.green
+                                      : Colors.red,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Text(
+                                widget.room!.isFilled ? 'Ditempati' : 'Kosong',
+                                style: TextStyle(
+                                  color: widget.room!.isFilled
+                                      ? AppColors.white
+                                      : Colors.red,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 30),
                           SizedBox(
                             width: double.infinity,
@@ -198,17 +216,10 @@ class _FormLabel extends StatelessWidget {
 }
 
 class _BooleanControl extends StatelessWidget {
-  const _BooleanControl({
-    required this.value,
-    required this.onChanged,
-    this.falseLabel = 'Tidak',
-    this.trueLabel = 'Ya',
-  });
+  const _BooleanControl({required this.value, required this.onChanged});
 
   final bool value;
   final ValueChanged<bool> onChanged;
-  final String falseLabel;
-  final String trueLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -225,7 +236,7 @@ class _BooleanControl extends StatelessWidget {
               ),
               onPressed: () => onChanged(false),
               child: Text(
-                falseLabel,
+                'Tidak',
                 style: TextStyle(color: value ? Colors.red : AppColors.white),
               ),
             ),
@@ -243,7 +254,7 @@ class _BooleanControl extends StatelessWidget {
               ),
               onPressed: () => onChanged(true),
               child: Text(
-                trueLabel,
+                'Ya',
                 style: TextStyle(color: value ? AppColors.white : Colors.green),
               ),
             ),

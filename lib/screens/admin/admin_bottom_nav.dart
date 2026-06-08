@@ -16,7 +16,7 @@ class AdminBottomNav extends StatelessWidget {
       selectedIndex: selectedIndex,
       items: [
         ManagementNavItem(
-          icon: Icons.home_rounded,
+          icon: Icons.dashboard_rounded,
           onTap: selectedIndex == 0
               ? () {}
               : () {
@@ -25,9 +25,9 @@ class AdminBottomNav extends StatelessWidget {
                   );
                 },
         ),
-        ManagementNavItem(icon: Icons.grid_view_rounded, onTap: () {}),
+        ManagementNavItem(icon: Icons.fact_check_rounded, onTap: () {}),
         ManagementNavItem(
-          icon: Icons.person_rounded,
+          icon: Icons.account_circle_rounded,
           onTap: selectedIndex == 2
               ? () {}
               : () {

@@ -77,7 +77,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       },
                       child: ManagementActionCard(
                         label: 'Verifikasi',
-                        icon: Icons.dashboard_rounded,
+                        icon: Icons.verified_user_rounded,
                         onTap: () {},
                       ),
                     ),
@@ -96,7 +96,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       },
                       child: ManagementActionCard(
                         label: 'Validasi Kamar',
-                        icon: Icons.dashboard_rounded,
+                        icon: Icons.bedroom_parent_rounded,
                         onTap: () {},
                       ),
                     ),

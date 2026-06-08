@@ -16,6 +16,7 @@ import '../../widgets/branch_map_widget.dart';
 import '../../widgets/branch_widgets.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/photo_source_sheet.dart';
 import 'owner_bottom_nav.dart';
 import 'owner_branch_form_screen.dart';
 
@@ -206,8 +207,10 @@ class _OwnerBranchDetailScreenState extends State<OwnerBranchDetailScreen> {
 
   Future<void> _uploadPhoto() async {
     final branchProvider = context.read<BranchProvider>();
+    final source = await showPhotoSourceSheet(context, title: 'Foto Bangunan');
+    if (source == null) return;
     final image = await _picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
       maxWidth: 1400,
       imageQuality: 88,
     );

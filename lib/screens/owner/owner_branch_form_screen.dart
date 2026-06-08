@@ -15,6 +15,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/branch_map_widget.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/photo_source_sheet.dart';
 import 'owner_bottom_nav.dart';
 
 class OwnerBranchFormScreen extends StatefulWidget {
@@ -51,9 +52,7 @@ class _OwnerBranchFormScreenState extends State<OwnerBranchFormScreen> {
   void initState() {
     super.initState();
     final item = widget.item;
-    if (item == null) {
-      _getCurrentLocation();
-    } else {
+    if (item != null) {
       _nameController.text = item.name;
       _descriptionController.text = item.description;
       _addressController.text = item.address;
@@ -63,7 +62,11 @@ class _OwnerBranchFormScreenState extends State<OwnerBranchFormScreen> {
       _isActive = item.isActive;
       _locationStatus = 'Titik lokasi cabang saat ini';
     }
-    _fetchFacilities();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (item == null) _getCurrentLocation();
+      _fetchFacilities();
+    });
   }
 
   @override
@@ -112,13 +115,33 @@ class _OwnerBranchFormScreenState extends State<OwnerBranchFormScreen> {
 
   Future<void> _pickBuildingPhotos() async {
     try {
-      final images = await _picker.pickMultiImage(
-        maxWidth: 1400,
-        imageQuality: 88,
-      );
-      if (images.isEmpty) return;
       final photos = <_PendingBranchPhoto>[];
-      for (final image in images) {
+      final source = await showPhotoSourceSheet(
+        context,
+        title: 'Foto Bangunan',
+      );
+      if (source == null) return;
+      if (source == ImageSource.gallery) {
+        final images = await _picker.pickMultiImage(
+          maxWidth: 1400,
+          imageQuality: 88,
+        );
+        if (images.isEmpty) return;
+        for (final image in images) {
+          photos.add(
+            _PendingBranchPhoto(
+              bytes: await image.readAsBytes(),
+              filename: image.name.isEmpty ? 'building.jpg' : image.name,
+            ),
+          );
+        }
+      } else {
+        final image = await _picker.pickImage(
+          source: ImageSource.camera,
+          maxWidth: 1400,
+          imageQuality: 88,
+        );
+        if (image == null) return;
         photos.add(
           _PendingBranchPhoto(
             bytes: await image.readAsBytes(),
@@ -138,8 +161,10 @@ class _OwnerBranchFormScreenState extends State<OwnerBranchFormScreen> {
     required String errorMessage,
   }) async {
     try {
+      final source = await showPhotoSourceSheet(context, title: 'Pilih Gambar');
+      if (source == null) return;
       final image = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 1200,
         imageQuality: 88,
       );

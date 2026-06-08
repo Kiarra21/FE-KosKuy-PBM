@@ -24,7 +24,9 @@ class _OwnerBranchScreenState extends State<OwnerBranchScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchBranches();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetchBranches();
+    });
   }
 
   Future<void> _fetchBranches() async {

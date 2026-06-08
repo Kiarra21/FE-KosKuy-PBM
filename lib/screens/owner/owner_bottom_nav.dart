@@ -19,7 +19,7 @@ class OwnerBottomNav extends StatelessWidget {
       selectedIndex: selectedIndex,
       items: [
         ManagementNavItem(
-          icon: Icons.home_rounded,
+          icon: Icons.dashboard_rounded,
           onTap: selectedIndex == 0
               ? () {}
               : () {
@@ -29,7 +29,7 @@ class OwnerBottomNav extends StatelessWidget {
                 },
         ),
         ManagementNavItem(
-          icon: Icons.grid_view_rounded,
+          icon: Icons.apartment_rounded,
           onTap: selectedIndex == 1
               ? () {}
               : () {
@@ -39,7 +39,7 @@ class OwnerBottomNav extends StatelessWidget {
                 },
         ),
         ManagementNavItem(
-          icon: Icons.article_rounded,
+          icon: Icons.settings_suggest_rounded,
           onTap: selectedIndex == 2
               ? () {}
               : () {
@@ -49,7 +49,7 @@ class OwnerBottomNav extends StatelessWidget {
                 },
         ),
         ManagementNavItem(
-          icon: Icons.mail_rounded,
+          icon: Icons.groups_rounded,
           onTap: selectedIndex == 3
               ? () {}
               : () {
@@ -59,7 +59,7 @@ class OwnerBottomNav extends StatelessWidget {
                 },
         ),
         ManagementNavItem(
-          icon: Icons.person_rounded,
+          icon: Icons.account_circle_rounded,
           onTap: selectedIndex == 4
               ? () {}
               : () {

@@ -104,12 +104,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                 },
               ),
               BottomNavIcon(
-                icon: Icons.grid_view_rounded,
+                icon: Icons.receipt_long_rounded,
                 selected: true,
                 onTap: () {},
               ),
               BottomNavIcon(
-                icon: Icons.person_rounded,
+                icon: Icons.account_circle_rounded,
                 selected: false,
                 onTap: () {
                   Navigator.of(context).pushReplacement(

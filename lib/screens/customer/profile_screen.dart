@@ -44,7 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
             BottomNavIcon(
-              icon: Icons.grid_view_rounded,
+              icon: Icons.receipt_long_rounded,
               selected: false,
               onTap: () {
                 Navigator.of(context).pushReplacement(
@@ -53,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
             BottomNavIcon(
-              icon: Icons.person_rounded,
+              icon: Icons.account_circle_rounded,
               selected: true,
               onTap: () {},
             ),

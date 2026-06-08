@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () => setState(() => _selectedIndex = 0),
                   ),
                   BottomNavIcon(
-                    icon: Icons.grid_view_rounded,
+                    icon: Icons.receipt_long_rounded,
                     selected: _selectedIndex == 1,
                     onTap: () {
                       setState(() => _selectedIndex = 1);
@@ -247,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   BottomNavIcon(
-                    icon: Icons.person_rounded,
+                    icon: Icons.account_circle_rounded,
                     selected: _selectedIndex == 2,
                     onTap: () {
                       setState(() => _selectedIndex = 2);

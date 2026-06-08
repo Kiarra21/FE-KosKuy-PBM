@@ -98,13 +98,11 @@ class OwnerRoomProvider extends ChangeNotifier {
     required int roomTypeId,
     required int number,
     required bool isActive,
-    required bool isFilled,
   }) async {
     final item = await _service.createRoom(
       roomTypeId: roomTypeId,
       number: number,
       isActive: isActive,
-      isFilled: isFilled,
     );
     await fetchRooms(roomTypeId);
     return item;
@@ -115,14 +113,12 @@ class OwnerRoomProvider extends ChangeNotifier {
     required int roomTypeId,
     required int number,
     required bool isActive,
-    required bool isFilled,
   }) async {
     final item = await _service.updateRoom(
       id: id,
       roomTypeId: roomTypeId,
       number: number,
       isActive: isActive,
-      isFilled: isFilled,
     );
     await fetchRooms(roomTypeId);
     return item;
