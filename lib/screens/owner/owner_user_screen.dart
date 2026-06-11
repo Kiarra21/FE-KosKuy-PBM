@@ -8,6 +8,8 @@ import '../../providers/owner_user_provider.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/app_top_notification.dart';
+import '../../widgets/owner_picker_widgets.dart';
 import 'owner_bottom_nav.dart';
 
 class OwnerUserScreen extends StatefulWidget {
@@ -92,9 +94,7 @@ class _OwnerUserScreenState extends State<OwnerUserScreen> {
 
   void _message(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override
@@ -154,44 +154,30 @@ class _OwnerUserScreenState extends State<OwnerUserScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedRole,
-                      dropdownColor: AppColors.white,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.filter_list_rounded),
-                        filled: true,
-                        fillColor: const Color(0xFFF0F1F4),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'all',
-                          child: Text('Semua User'),
-                        ),
-                        DropdownMenuItem(
+                    OwnerSelectField<String>(
+                      title: 'Filter Role',
+                      // label: 'Role User',
+                      hint: 'Semua User',
+                      prefixIcon: Icons.filter_list_rounded,
+                      selectedValue: _selectedRole,
+                      enabled: !_loading,
+                      options: const [
+                        OwnerSelectionOption(value: 'all', label: 'Semua User'),
+                        OwnerSelectionOption(
                           value: 'pemilik_kos',
-                          child: Text('Pemilik Kos'),
+                          label: 'Pemilik Kos',
                         ),
-                        DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                        DropdownMenuItem(
+                        OwnerSelectionOption(value: 'admin', label: 'Admin'),
+                        OwnerSelectionOption(
                           value: 'customer',
-                          child: Text('Customer'),
+                          label: 'Customer',
                         ),
                       ],
-                      onChanged: _loading
-                          ? null
-                          : (value) {
-                              if (value == null) return;
-                              setState(() => _selectedRole = value);
-                              _fetch();
-                            },
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _selectedRole = value);
+                        _fetch();
+                      },
                     ),
                   ],
                 ),
@@ -340,9 +326,7 @@ class _OwnerUserFormSheetState extends State<OwnerUserFormSheet> {
   }
 
   void _message(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override
@@ -387,55 +371,53 @@ class _OwnerUserFormSheetState extends State<OwnerUserFormSheet> {
                   obscureText: true,
                 ),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: _role,
-                  dropdownColor: AppColors.white,
-                  decoration: const InputDecoration(
-                    filled: true,
-                    fillColor: AppColors.white,
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                    DropdownMenuItem(
+                OwnerSelectField<String>(
+                  title: 'Pilih Role',
+                  label: 'Role',
+                  selectedValue: _role,
+                  backgroundColor: AppColors.white,
+                  prefixIcon: Icons.badge_rounded,
+                  textColor: AppColors.navy,
+                  options: const [
+                    OwnerSelectionOption(value: 'admin', label: 'Admin'),
+                    OwnerSelectionOption(
                       value: 'pemilik_kos',
-                      child: Text('Pemilik Kos'),
+                      label: 'Pemilik Kos',
                     ),
-                    DropdownMenuItem(
-                      value: 'customer',
-                      child: Text('Customer'),
-                    ),
+                    OwnerSelectionOption(value: 'customer', label: 'Customer'),
                   ],
                   onChanged: (value) {
+                    if (value == null) return;
                     setState(() {
-                      _role = value ?? _role;
+                      _role = value;
                       if (_role != 'admin') _branchId = null;
                     });
                   },
                 ),
                 if (_role == 'admin') ...[
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<int?>(
-                    initialValue: _branchId,
-                    dropdownColor: AppColors.white,
-                    decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.white,
-                      labelText: 'Cabang Admin',
-                    ),
-                    items: [
-                      const DropdownMenuItem<int?>(
+                  OwnerSelectField<int?>(
+                    title: 'Cabang Admin',
+                    label: 'Cabang Admin',
+                    selectedValue: _branchId,
+                    backgroundColor: AppColors.white,
+                    prefixIcon: Icons.apartment_rounded,
+                    textColor: AppColors.navy,
+                    hint: 'Tanpa Cabang',
+                    options: [
+                      const OwnerSelectionOption<int?>(
                         value: null,
-                        child: Text('Tanpa Cabang'),
+                        label: 'Tanpa Cabang',
                       ),
                       if (hasCurrentBranch)
-                        DropdownMenuItem<int?>(
+                        OwnerSelectionOption<int?>(
                           value: _branchId,
-                          child: Text('Cabang ID: $_branchId'),
+                          label: 'Cabang ID: $_branchId',
                         ),
                       for (final branch in branches)
-                        DropdownMenuItem<int?>(
+                        OwnerSelectionOption<int?>(
                           value: branch.id,
-                          child: Text(branch.name),
+                          label: branch.name,
                         ),
                     ],
                     onChanged: (value) => setState(() => _branchId = value),

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../core/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../routes/role_router.dart';
 import '../routes/slide_page_route.dart';
 import '../services/auth_service.dart';
+import '../widgets/app_top_notification.dart';
 import '../widgets/auth_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -70,9 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override

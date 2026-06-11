@@ -7,6 +7,7 @@ import '../../providers/branch_provider.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/app_top_notification.dart';
 import 'owner_bottom_nav.dart';
 
 class OwnerFacilityScreen extends StatefulWidget {
@@ -104,9 +105,7 @@ class _OwnerFacilityScreenState extends State<OwnerFacilityScreen> {
 
   void _message(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override

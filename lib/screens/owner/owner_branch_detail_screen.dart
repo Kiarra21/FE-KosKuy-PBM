@@ -16,6 +16,7 @@ import '../../widgets/branch_map_widget.dart';
 import '../../widgets/branch_widgets.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/app_top_notification.dart';
 import '../../widgets/photo_source_sheet.dart';
 import 'owner_bottom_nav.dart';
 import 'owner_branch_form_screen.dart';
@@ -449,9 +450,7 @@ class _OwnerBranchDetailScreenState extends State<OwnerBranchDetailScreen> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   double get _mapLatitude {

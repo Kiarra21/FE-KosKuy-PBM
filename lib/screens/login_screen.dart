@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../routes/role_router.dart';
 import '../routes/slide_page_route.dart';
 import '../services/auth_service.dart';
+import '../widgets/app_top_notification.dart';
 import '../widgets/auth_widgets.dart';
 import 'register_screen.dart';
 
@@ -54,9 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override

@@ -14,6 +14,8 @@ import '../../routes/slide_page_route.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/app_top_notification.dart';
+import '../../widgets/owner_picker_widgets.dart';
 import '../../widgets/photo_source_sheet.dart';
 import 'owner_bottom_nav.dart';
 import 'owner_room_detail_screen.dart';
@@ -78,32 +80,40 @@ class _OwnerRoomScreenState extends State<OwnerRoomScreen> {
     }
   }
 
-  Future<void> _uploadPhoto(ManagedRoomType item) async {
+  Future<bool> _uploadPhoto(ManagedRoomType item) async {
     final roomProvider = context.read<OwnerRoomProvider>();
     final source = await showPhotoSourceSheet(context, title: 'Foto Kamar');
-    if (source == null) return;
+    if (source == null) return false;
     final image = await _picker.pickImage(
       source: source,
       maxWidth: 1400,
       imageQuality: 88,
     );
-    if (image == null) return;
+    if (image == null) return false;
     try {
       await roomProvider.uploadRoomTypePhoto(
         roomTypeId: item.id,
         bytes: await image.readAsBytes(),
         filename: image.name.isEmpty ? 'room.jpg' : image.name,
       );
+      await roomProvider.fetchRoomTypePhotos(item.id);
       _message('Foto kamar berhasil ditambahkan.');
-      return;
+      return true;
     } on AuthException catch (error) {
       _message(error.message);
+      return false;
     }
   }
 
   Future<void> _managePhotos(ManagedRoomType item) async {
     final roomProvider = context.read<OwnerRoomProvider>();
-    final photos = await roomProvider.fetchRoomTypePhotos(item.id);
+    late final List<ManagedRoomPhoto> photos;
+    try {
+      photos = await roomProvider.fetchRoomTypePhotos(item.id);
+    } on AuthException catch (error) {
+      _message(error.message);
+      return;
+    }
     if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
@@ -113,8 +123,8 @@ class _OwnerRoomScreenState extends State<OwnerRoomScreen> {
           photos: photos,
           onUpload: () async {
             Navigator.of(context).pop();
-            await _uploadPhoto(item);
-            if (mounted) {
+            final uploaded = await _uploadPhoto(item);
+            if (mounted && uploaded) {
               _managePhotos(item);
             }
           },
@@ -203,9 +213,7 @@ class _OwnerRoomScreenState extends State<OwnerRoomScreen> {
 
   void _message(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override
@@ -358,26 +366,21 @@ class OwnerRoomTypeCard extends StatelessWidget {
                 label: item.isActive ? 'Aktif' : 'Non Aktif',
                 color: item.isActive ? Colors.green : Colors.red,
               ),
-              SizedBox(
-                width: 30,
-                height: 28,
-                child: PopupMenuButton<String>(
-                  padding: EdgeInsets.zero,
-                  color: AppColors.white,
-                  icon: const Icon(
-                    Icons.more_vert_rounded,
-                    color: AppColors.white,
-                    size: 18,
+              OwnerActionMenuButton(
+                title: item.name,
+                actions: [
+                  OwnerActionMenuItem(
+                    label: 'Kelola Foto',
+                    icon: Icons.photo_library_rounded,
+                    onTap: onManagePhotos,
                   ),
-                  onSelected: (value) {
-                    if (value == 'photos') onManagePhotos();
-                    if (value == 'delete') onDelete();
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'photos', child: Text('Kelola Foto')),
-                    PopupMenuItem(value: 'delete', child: Text('Hapus')),
-                  ],
-                ),
+                  OwnerActionMenuItem(
+                    label: 'Hapus',
+                    icon: Icons.delete_rounded,
+                    destructive: true,
+                    onTap: onDelete,
+                  ),
+                ],
               ),
             ],
           ),
@@ -538,9 +541,9 @@ class _OwnerRoomTypeFormSheetState extends State<OwnerRoomTypeFormSheet> {
     if (item == null) return;
     setState(() => _loadingPhotos = true);
     try {
-      final photos = await context.read<OwnerRoomProvider>().fetchRoomTypePhotos(
-        item.id,
-      );
+      final photos = await context
+          .read<OwnerRoomProvider>()
+          .fetchRoomTypePhotos(item.id);
       if (!mounted) return;
       setState(() {
         _existingPhotos
@@ -667,9 +670,7 @@ class _OwnerRoomTypeFormSheetState extends State<OwnerRoomTypeFormSheet> {
 
   void _message(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override

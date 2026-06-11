@@ -18,6 +18,7 @@ dependencies:
   url_launcher: ^6.3.2
   shared_preferences: ^2.3.3
   provider: ^6.1.5+1
+  awesome_dialog: ^3.3.0
 
 dev_dependencies:
   flutter_test:

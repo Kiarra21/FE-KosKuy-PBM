@@ -9,6 +9,7 @@ import '../core/app_colors.dart';
 import '../models/auth_user.dart';
 import '../providers/profile_provider.dart';
 import '../services/auth_service.dart';
+import 'app_top_notification.dart';
 import 'common_widgets.dart';
 import 'home_widgets.dart';
 import 'photo_source_sheet.dart';
@@ -53,9 +54,7 @@ class _ProfileShellState extends State<ProfileShell> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override
@@ -337,9 +336,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override
@@ -612,9 +609,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.navy),
-    );
+    showAppTopNotification(context, message: message);
   }
 
   @override
