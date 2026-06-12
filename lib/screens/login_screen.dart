@@ -8,6 +8,7 @@ import '../routes/slide_page_route.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_top_notification.dart';
 import '../widgets/auth_widgets.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -91,7 +92,17 @@ class _LoginScreenState extends State<LoginScreen> {
         Align(
           alignment: Alignment.centerRight,
           child: GestureDetector(
-            onTap: () {},
+            onTap: loading
+                ? null
+                : () {
+                    Navigator.of(context).push(
+                      SlidePageRoute(
+                        child: ForgotPasswordScreen(
+                          initialEmail: _emailController.text.trim(),
+                        ),
+                      ),
+                    );
+                  },
             child: const Text(
               'Lupa Password?',
               style: TextStyle(
