@@ -8,6 +8,7 @@ class AuthUser {
     this.address,
     this.profilePicture,
     this.isActive = true,
+    this.branchId,
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
@@ -24,6 +25,9 @@ class AuthUser {
           ? null
           : '${json['profile_picture']}',
       isActive: json['is_active'] is bool ? json['is_active'] as bool : true,
+      branchId: json['branch_id'] is int
+          ? json['branch_id'] as int
+          : int.tryParse('${json['branch_id'] ?? ''}'),
     );
   }
 
@@ -35,6 +39,7 @@ class AuthUser {
   final String? address;
   final String? profilePicture;
   final bool isActive;
+  final int? branchId;
 
   Map<String, dynamic> toJson() {
     return {
@@ -46,6 +51,7 @@ class AuthUser {
       'address': address,
       'profile_picture': profilePicture,
       'is_active': isActive,
+      'branch_id': branchId,
     };
   }
 }

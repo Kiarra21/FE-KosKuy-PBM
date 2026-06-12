@@ -16,7 +16,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return ProfileShell(
-      bottomNavigationBar: const AdminBottomNav(selectedIndex: 2),
+      bottomNavigationBar: const AdminBottomNav(selectedIndex: 3),
       onLoggedOut: (context) {
         Navigator.of(context).pushAndRemoveUntil(
           SlidePageRoute(child: const LoginScreen()),

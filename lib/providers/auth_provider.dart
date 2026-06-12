@@ -41,6 +41,26 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
+  Future<String> forgotPassword({required String email}) {
+    return _run(() => _service.forgotPassword(email: email));
+  }
+
+  Future<String> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) {
+    return _run(
+      () => _service.resetPassword(
+        email: email,
+        token: token,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      ),
+    );
+  }
+
   Future<void> restoreAndRefresh() async {
     final restored = await AuthSessionStore.instance.restore();
     if (restored == null) {

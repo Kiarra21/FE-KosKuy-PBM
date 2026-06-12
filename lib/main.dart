@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/app_colors.dart';
+import 'providers/admin_management_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/booking_provider.dart';
 import 'providers/branch_provider.dart';
@@ -29,6 +30,7 @@ class KosKuyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BranchProvider()),
         ChangeNotifierProvider(create: (_) => OwnerRoomProvider()),
         ChangeNotifierProvider(create: (_) => OwnerUserProvider()),
+        ChangeNotifierProvider(create: (_) => AdminManagementProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
