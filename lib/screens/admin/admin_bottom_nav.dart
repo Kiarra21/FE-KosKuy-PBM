@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../routes/slide_page_route.dart';
 import '../../widgets/management_widgets.dart';
+import 'admin_booking_screen.dart';
 import 'admin_dashboard_screen.dart';
+import 'admin_payment_screen.dart';
 import 'admin_profile_screen.dart';
 
 class AdminBottomNav extends StatelessWidget {
@@ -25,10 +27,29 @@ class AdminBottomNav extends StatelessWidget {
                   );
                 },
         ),
-        ManagementNavItem(icon: Icons.fact_check_rounded, onTap: () {}),
+        ManagementNavItem(
+          icon: Icons.fact_check_rounded,
+          onTap: selectedIndex == 1
+              ? () {}
+              : () {
+                  Navigator.of(context).pushReplacement(
+                    SlidePageRoute(child: const AdminBookingScreen()),
+                  );
+                },
+        ),
+        ManagementNavItem(
+          icon: Icons.payments_rounded,
+          onTap: selectedIndex == 2
+              ? () {}
+              : () {
+                  Navigator.of(context).pushReplacement(
+                    SlidePageRoute(child: const AdminPaymentScreen()),
+                  );
+                },
+        ),
         ManagementNavItem(
           icon: Icons.account_circle_rounded,
-          onTap: selectedIndex == 2
+          onTap: selectedIndex == 3
               ? () {}
               : () {
                   Navigator.of(context).pushReplacement(

@@ -57,6 +57,44 @@ class AuthService {
     return _handleAuthResponse(response);
   }
 
+  Future<String> forgotPassword({required String email}) async {
+    final response = await client
+        .post(
+          Uri.parse('${ApiConfig.baseUrl}/auth/forgot-password'),
+          headers: const {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'email': email}),
+        )
+        .timeout(const Duration(seconds: 15));
+    return _handleMessageResponse(response);
+  }
+
+  Future<String> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final response = await client
+        .post(
+          Uri.parse('${ApiConfig.baseUrl}/auth/reset-password'),
+          headers: const {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'email': email,
+            'token': token,
+            'password': password,
+            'password_confirmation': passwordConfirmation,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+    return _handleMessageResponse(response);
+  }
+
   Future<void> logout() async {
     final token = AuthSessionStore.instance.token;
     if (token == null || token.isEmpty) {
@@ -192,6 +230,18 @@ class AuthService {
     throw AuthException(_extractMessage(body));
   }
 
+  String _handleMessageResponse(http.Response response) {
+    final body = response.body.isEmpty
+        ? <String, dynamic>{}
+        : (jsonDecode(response.body) as Map).cast<String, dynamic>();
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final message = body['message'];
+      if (message is String && message.isNotEmpty) return message;
+      return 'Berhasil.';
+    }
+    throw AuthException(_extractMessage(body));
+  }
+
   Map<String, String> _authHeaders() {
     final token = AuthSessionStore.instance.token;
     return {
@@ -214,9 +264,10 @@ class AuthService {
 }
 
 class AuthException implements Exception {
-  const AuthException(this.message);
+  const AuthException(this.message, {this.canFallback = false});
 
   final String message;
+  final bool canFallback;
 
   @override
   String toString() => message;
