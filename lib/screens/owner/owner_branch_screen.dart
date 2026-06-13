@@ -63,7 +63,7 @@ class _OwnerBranchScreenState extends State<OwnerBranchScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              const HomeHeader(),
+              const HomeHeader(showNotification: false),
               Expanded(
                 child: RefreshIndicator(
                   color: AppColors.gold,

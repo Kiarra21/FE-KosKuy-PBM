@@ -31,34 +31,13 @@ class _OwnerFacilityScreenState extends State<OwnerFacilityScreen> {
   }
 
   Future<void> _openForm([FacilityItem? item]) async {
-    final branchProvider = context.read<BranchProvider>();
-    final controller = TextEditingController(text: item?.name ?? '');
     final name = await showDialog<String>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(item == null ? 'Tambah Fasilitas' : 'Edit Fasilitas'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Nama fasilitas'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
-            FilledButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Simpan'),
-            ),
-          ],
-        );
-      },
+      builder: (_) => _FacilityFormDialog(item: item),
     );
-    controller.dispose();
     if (name == null || name.isEmpty) return;
+    if (!mounted) return;
+    final branchProvider = context.read<BranchProvider>();
     try {
       if (item == null) {
         await branchProvider.createFacility(name);
@@ -118,7 +97,7 @@ class _OwnerFacilityScreenState extends State<OwnerFacilityScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              const HomeHeader(),
+              const HomeHeader(showNotification: false),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                 child: Row(
@@ -203,5 +182,55 @@ class _OwnerFacilityScreenState extends State<OwnerFacilityScreen> {
         bottomNavigationBar: const OwnerBottomNav(selectedIndex: 2),
       ),
     );
+  }
+}
+
+class _FacilityFormDialog extends StatefulWidget {
+  const _FacilityFormDialog({required this.item});
+
+  final FacilityItem? item;
+
+  @override
+  State<_FacilityFormDialog> createState() => _FacilityFormDialogState();
+}
+
+class _FacilityFormDialogState extends State<_FacilityFormDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.item?.name ?? '');
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.item == null ? 'Tambah Fasilitas' : 'Edit Fasilitas'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(labelText: 'Nama fasilitas'),
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Batal'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Simpan')),
+      ],
+    );
+  }
+
+  void _submit() {
+    Navigator.of(context).pop(_controller.text.trim());
   }
 }

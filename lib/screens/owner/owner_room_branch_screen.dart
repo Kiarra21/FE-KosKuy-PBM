@@ -45,7 +45,7 @@ class _OwnerRoomBranchScreenState extends State<OwnerRoomBranchScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              const HomeHeader(),
+              const HomeHeader(showNotification: false),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                 child: Row(

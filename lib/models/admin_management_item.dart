@@ -1,9 +1,11 @@
 import '../core/api_config.dart';
+import 'booking_item.dart';
 
 class AdminBookingItem {
   const AdminBookingItem({
     required this.id,
     required this.customerName,
+    required this.branchId,
     required this.branchName,
     required this.roomName,
     required this.roomTypeId,
@@ -17,6 +19,7 @@ class AdminBookingItem {
   });
 
   factory AdminBookingItem.fromJson(Map<String, dynamic> json) {
+    final customerBooking = BookingItem.fromJson(json);
     final customer =
         (json['customer'] as Map?)?.cast<String, dynamic>() ??
         (json['user'] as Map?)?.cast<String, dynamic>() ??
@@ -33,14 +36,50 @@ class AdminBookingItem {
         (json['branch'] as Map?)?.cast<String, dynamic>() ??
         (roomType['branch'] as Map?)?.cast<String, dynamic>() ??
         {};
+    final booking = (json['booking'] as Map?)?.cast<String, dynamic>() ?? {};
+    final nestedBooking = booking.isEmpty
+        ? null
+        : BookingItem.fromJson(booking);
     final paymentJson =
         (json['payment'] as Map?)?.cast<String, dynamic>() ??
         (json['latest_payment'] as Map?)?.cast<String, dynamic>();
     final rawStatus = '${json['status'] ?? json['booking_status'] ?? ''}';
+    final checkIn = _dateLabel(
+      json['check_in_date'] ??
+          json['checkin_date'] ??
+          json['check_in'] ??
+          json['checkin'] ??
+          json['start_date'] ??
+          json['from_date'] ??
+          booking['check_in_date'] ??
+          booking['checkin_date'] ??
+          booking['check_in'] ??
+          booking['checkin'] ??
+          booking['start_date'],
+    );
+    final checkOut = _dateLabel(
+      json['check_out_date'] ??
+          json['checkout_date'] ??
+          json['check_out'] ??
+          json['checkout'] ??
+          json['end_date'] ??
+          json['to_date'] ??
+          booking['check_out_date'] ??
+          booking['checkout_date'] ??
+          booking['check_out'] ??
+          booking['checkout'] ??
+          booking['end_date'],
+    );
     return AdminBookingItem(
       id: _intValue(json['id']),
       customerName:
           '${json['customer_name'] ?? customer['name'] ?? json['name'] ?? '-'}',
+      branchId: _intValue(
+        json['branch_id'] ??
+            branch['id'] ??
+            roomType['branch_id'] ??
+            booking['branch_id'],
+      ),
       branchName:
           '${json['branch_name'] ?? branch['name'] ?? roomType['branch_name'] ?? 'Cabang'}',
       roomName:
@@ -49,19 +88,32 @@ class AdminBookingItem {
         json['room_type_id'] ?? roomType['id'] ?? room['room_type_id'],
       ),
       roomNumber: '${json['room_number'] ?? room['number'] ?? '-'}',
-      checkIn: _dateLabel(json['check_in'] ?? json['start_date']),
-      checkOut: _dateLabel(json['check_out'] ?? json['end_date']),
+      checkIn: _adminDateFallback(
+        checkIn,
+        nestedBooking?.checkInDate,
+        customerBooking.checkInDate,
+      ),
+      checkOut: _adminDateFallback(
+        checkOut,
+        nestedBooking?.checkOutDate,
+        customerBooking.checkOutDate,
+      ),
       total: _rupiah(json['total'] ?? json['total_price'] ?? json['amount']),
       status: AdminBookingStatus.from(rawStatus),
       rawStatus: rawStatus.isEmpty ? 'pending' : rawStatus,
       payment: paymentJson == null
           ? null
-          : AdminPaymentItem.fromJson(paymentJson, bookingJson: json),
+          : AdminPaymentItem.fromJson(
+              paymentJson,
+              bookingJson: json,
+              hasPaymentRecord: true,
+            ),
     );
   }
 
   final int id;
   final String customerName;
+  final int branchId;
   final String branchName;
   final String roomName;
   final int roomTypeId;
@@ -79,18 +131,23 @@ class AdminPaymentItem {
     required this.id,
     required this.bookingId,
     required this.customerName,
+    required this.branchId,
     required this.branchName,
     required this.roomName,
     required this.amount,
+    required this.amountRaw,
     required this.status,
     required this.rawStatus,
     required this.proofUrl,
     required this.createdAt,
+    required this.createdDate,
+    required this.hasPaymentRecord,
   });
 
   factory AdminPaymentItem.fromJson(
     Map<String, dynamic> json, {
     Map<String, dynamic>? bookingJson,
+    bool hasPaymentRecord = true,
   }) {
     final booking =
         (json['booking'] as Map?)?.cast<String, dynamic>() ?? bookingJson ?? {};
@@ -115,40 +172,107 @@ class AdminPaymentItem {
         {};
     final proof =
         '${json['proof_url'] ?? json['proof_image_url'] ?? json['payment_proof_url'] ?? json['proof_of_payment_url'] ?? json['proof_image'] ?? json['proof'] ?? json['payment_proof'] ?? ''}';
-    final rawStatus =
-        '${json['status'] ?? json['payment_status'] ?? booking['payment_status'] ?? ''}';
+    final rawStatus = hasPaymentRecord
+        ? '${json['status'] ?? json['payment_status'] ?? booking['payment_status'] ?? ''}'
+        : 'unpaid';
+    final rawAmount =
+        json['amount'] ??
+        json['total'] ??
+        booking['total'] ??
+        booking['total_price'];
+    final rawDate =
+        json['paid_at'] ??
+        json['created_at'] ??
+        booking['paid_at'] ??
+        booking['updated_at'] ??
+        booking['created_at'];
     return AdminPaymentItem(
-      id: _intValue(json['payment_id'] ?? json['id'] ?? booking['payment_id']),
+      id: hasPaymentRecord
+          ? _intValue(json['payment_id'] ?? json['id'] ?? booking['payment_id'])
+          : 0,
       bookingId: _intValue(json['booking_id'] ?? booking['id']),
       customerName:
           '${json['customer_name'] ?? booking['customer_name'] ?? customer['name'] ?? '-'}',
+      branchId: _intValue(
+        json['branch_id'] ??
+            booking['branch_id'] ??
+            branch['id'] ??
+            roomType['branch_id'],
+      ),
       branchName:
           '${json['branch_name'] ?? booking['branch_name'] ?? branch['name'] ?? 'Cabang'}',
       roomName:
           '${json['room_type_name'] ?? booking['room_type_name'] ?? roomType['name'] ?? 'Kamar'}',
-      amount: _rupiah(
-        json['amount'] ??
-            json['total'] ??
-            booking['total'] ??
-            booking['total_price'],
-      ),
+      amount: _rupiah(rawAmount),
+      amountRaw: _doubleValue(rawAmount),
       status: AdminPaymentStatus.from(rawStatus),
       rawStatus: rawStatus.isEmpty ? 'pending' : rawStatus,
       proofUrl: proof.isEmpty ? '' : ApiConfig.storageUrl(proof),
-      createdAt: _dateLabel(json['created_at'] ?? json['paid_at']),
+      createdAt: _dateLabel(rawDate),
+      createdDate: _dateValue(rawDate),
+      hasPaymentRecord: hasPaymentRecord,
     );
   }
 
   final int id;
   final int bookingId;
   final String customerName;
+  final int branchId;
   final String branchName;
   final String roomName;
   final String amount;
+  final double amountRaw;
   final AdminPaymentStatus status;
   final String rawStatus;
   final String proofUrl;
   final String createdAt;
+  final DateTime? createdDate;
+  final bool hasPaymentRecord;
+
+  bool get hasProof => proofUrl.isNotEmpty;
+  bool get canReview =>
+      hasPaymentRecord && hasProof && status == AdminPaymentStatus.pending;
+  String get displayStatus => hasPaymentRecord ? status.label : 'Belum Bayar';
+}
+
+class AdminReviewItem {
+  const AdminReviewItem({
+    required this.id,
+    required this.customerName,
+    required this.rating,
+    required this.comment,
+    required this.createdAt,
+    required this.createdDate,
+    required this.isVisible,
+  });
+
+  factory AdminReviewItem.fromJson(Map<String, dynamic> json) {
+    final customer =
+        (json['customer'] as Map?)?.cast<String, dynamic>() ??
+        (json['user'] as Map?)?.cast<String, dynamic>() ??
+        {};
+    final rawDate = json['created_at'] ?? json['updated_at'];
+    return AdminReviewItem(
+      id: _intValue(json['id']),
+      customerName:
+          '${json['customer_name'] ?? json['user_name'] ?? customer['name'] ?? 'Customer'}',
+      rating: _intValue(json['rating']),
+      comment: '${json['comment'] ?? json['review'] ?? json['message'] ?? ''}',
+      createdAt: _dateLabel(rawDate),
+      createdDate: _dateValue(rawDate),
+      isVisible: _boolValue(
+        json['is_visible'] ?? json['visible'] ?? json['is_public'] ?? true,
+      ),
+    );
+  }
+
+  final int id;
+  final String customerName;
+  final int rating;
+  final String comment;
+  final String createdAt;
+  final DateTime? createdDate;
+  final bool isVisible;
 }
 
 enum AdminBookingStatus {
@@ -238,6 +362,26 @@ int _intValue(dynamic value) {
   return int.tryParse('${value ?? ''}') ?? 0;
 }
 
+double _doubleValue(dynamic value) {
+  if (value is num) return value.toDouble();
+  final sanitized = '${value ?? ''}'.replaceAll(RegExp(r'[^0-9.]'), '');
+  return double.tryParse(sanitized) ?? 0;
+}
+
+bool _boolValue(dynamic value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final text = '${value ?? ''}'.toLowerCase();
+  if (text == 'false' || text == '0' || text == 'no') return false;
+  return true;
+}
+
+DateTime? _dateValue(dynamic value) {
+  final raw = '${value ?? ''}';
+  if (raw.isEmpty) return null;
+  return DateTime.tryParse(raw);
+}
+
 String _dateLabel(dynamic value) {
   final raw = '${value ?? ''}';
   if (raw.isEmpty) return '-';
@@ -258,6 +402,13 @@ String _dateLabel(dynamic value) {
     'Des',
   ];
   return '${date.day} ${months[date.month - 1]} ${date.year}';
+}
+
+String _adminDateFallback(String primary, String? nested, String root) {
+  if (primary != '-') return primary;
+  if (nested != null && nested.isNotEmpty) return nested;
+  if (root.isNotEmpty) return root;
+  return '-';
 }
 
 String _rupiah(dynamic value) {
