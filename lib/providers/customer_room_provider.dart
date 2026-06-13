@@ -2,13 +2,13 @@ import 'package:flutter/foundation.dart';
 
 import '../models/kos_item.dart';
 import '../services/auth_service.dart';
-import '../services/room_service.dart';
+import '../services/branch_service.dart';
 
 class CustomerRoomProvider extends ChangeNotifier {
-  CustomerRoomProvider({RoomService service = const RoomService()})
+  CustomerRoomProvider({BranchService service = const BranchService()})
     : _service = service;
 
-  final RoomService _service;
+  final BranchService _service;
   List<KosItem> _items = const [];
   final Map<int, KosItem> _details = {};
   bool _loading = false;
@@ -18,6 +18,7 @@ class CustomerRoomProvider extends ChangeNotifier {
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
 
+  /// Fetch daftar cabang kos (branches) untuk halaman home customer.
   Future<void> fetchRoomTypes({
     String? branchId,
     bool? isActive,
@@ -26,11 +27,8 @@ class CustomerRoomProvider extends ChangeNotifier {
     _setLoading(true);
     _errorMessage = null;
     try {
-      _items = await _service.fetchRoomTypes(
-        branchId: branchId,
-        isActive: isActive,
-        page: page,
-      );
+      final branches = await _service.fetchBranches(page: page);
+      _items = branches.map(KosItem.fromBranch).toList();
     } on AuthException catch (error) {
       _errorMessage = error.message;
     } catch (_) {
@@ -40,8 +38,10 @@ class CustomerRoomProvider extends ChangeNotifier {
     }
   }
 
+  /// Fetch detail satu cabang kos berdasarkan ID.
   Future<KosItem> fetchRoomType(int id) async {
-    final item = await _service.fetchRoomType(id);
+    final branch = await _service.fetchBranch(id);
+    final item = KosItem.fromBranch(branch);
     _details[id] = item;
     notifyListeners();
     return item;

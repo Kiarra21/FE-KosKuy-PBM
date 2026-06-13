@@ -32,7 +32,9 @@ class _ProfileShellState extends State<ProfileShell> {
   @override
   void initState() {
     super.initState();
-    _fetchProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetchProfile();
+    });
   }
 
   Future<void> _fetchProfile() async {
@@ -138,6 +140,8 @@ class ProfileBody extends StatelessWidget {
                     width: 86,
                     height: 86,
                     fit: BoxFit.cover,
+                    cacheWidth: 150,
+                    cacheHeight: 150,
                     errorBuilder: (context, error, stackTrace) {
                       return const ProfileAvatarFallback();
                     },
@@ -538,6 +542,8 @@ class EditProfileAvatar extends StatelessWidget {
         width: 82,
         height: 82,
         fit: BoxFit.cover,
+        cacheWidth: 150,
+        cacheHeight: 150,
         errorBuilder: (context, error, stackTrace) {
           return const EditProfileAvatarFallback();
         },

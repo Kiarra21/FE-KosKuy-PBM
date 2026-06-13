@@ -1,3 +1,5 @@
+import '../core/api_config.dart';
+
 class BookingItem {
   const BookingItem({
     required this.id,
@@ -5,9 +7,14 @@ class BookingItem {
     required this.roomLabel,
     required this.price,
     required this.total,
+    required this.totalPriceRaw,
     required this.durationLabel,
     required this.status,
     required this.paymentDeadline,
+    required this.qrisCodeUrl,
+    required this.checkInDate,
+    required this.checkOutDate,
+    required this.notes,
   });
 
   factory BookingItem.fromJson(Map<String, dynamic> json) {
@@ -24,21 +31,42 @@ class BookingItem {
         '${roomType['name'] ?? json['room_type_name'] ?? json['type'] ?? 'Kamar'}';
     final roomCount = _intValue(json['room_count'] ?? json['rooms_count'] ?? 1);
     final duration = _durationLabel(json);
+
+    // QRIS code dari cabang
+    final rawQris =
+        '${branch['qris_code_url'] ?? branch['qris_code'] ?? branch['qris'] ?? ''}';
+    final qrisUrl = rawQris.isEmpty ? '' : ApiConfig.storageUrl(rawQris);
+
+    // Harga total mentah
+    final rawTotal = json['total'] ?? json['total_price'] ?? json['amount'];
+    final totalPriceRaw = rawTotal is num
+        ? rawTotal.toDouble()
+        : double.tryParse('$rawTotal') ?? 0.0;
+
     return BookingItem(
       id: _intValue(json['id']),
       kosName:
           '${json['kos_name'] ?? json['branch_name'] ?? branch['name'] ?? roomType['name'] ?? 'KosKuy'}',
       roomLabel: '$roomCount Kamar, $roomTypeName',
       price: _rupiah(json['price'] ?? json['room_price'] ?? roomType['price']),
-      total: _rupiah(json['total'] ?? json['total_price'] ?? json['amount']),
+      total: _rupiah(rawTotal),
+      totalPriceRaw: totalPriceRaw,
       durationLabel: duration,
-      status: _statusLabel('${json['status'] ?? json['payment_status'] ?? ''}'),
+      status: _statusLabel('${json['display_status'] ?? json['status'] ?? ''}'),
       paymentDeadline: _dateLabel(
         json['payment_deadline'] ??
             json['expired_at'] ??
             json['expires_at'] ??
             json['pay_before'],
       ),
+      qrisCodeUrl: qrisUrl,
+      checkInDate: _dateLabel(
+        json['check_in_date'] ?? json['check_in'] ?? json['start_date'],
+      ),
+      checkOutDate: _dateLabel(
+        json['check_out_date'] ?? json['check_out'] ?? json['end_date'],
+      ),
+      notes: '${json['notes'] ?? ''}',
     );
   }
 
@@ -47,13 +75,23 @@ class BookingItem {
   final String roomLabel;
   final String price;
   final String total;
+  final double totalPriceRaw;
   final String durationLabel;
   final String status;
   final String paymentDeadline;
+  final String qrisCodeUrl;
+  final String checkInDate;
+  final String checkOutDate;
+  final String notes;
 
-  bool get isPaid => status == 'Lunas';
+  bool get isCompleted => status == 'Selesai';
+  bool get isPaid => status == 'Lunas' || isConfirmed || isCompleted;
   bool get isCancelled => status == 'Dibatalkan';
-  bool get isActive => !isPaid && !isCancelled;
+  bool get isConfirmed => status == 'Dikonfirmasi';
+  bool get isWaitingVerification => status == 'Menunggu Verifikasi';
+  bool get isUnpaid => status == 'Belum Bayar';
+  
+  bool get isActive => isUnpaid || isWaitingVerification || status == 'Lunas' || isConfirmed;
 
   static int _intValue(dynamic value) {
     if (value is int) return value;
@@ -61,12 +99,24 @@ class BookingItem {
   }
 
   static String _statusLabel(String value) {
+    if (value == 'Dibatalkan' ||
+        value == 'Selesai' ||
+        value == 'Dikonfirmasi' ||
+        value == 'Menunggu Verifikasi' ||
+        value == 'Lunas' ||
+        value == 'Belum Bayar') {
+      return value;
+    }
+    
+    // Fallback logic
     final normalized = value.toLowerCase().trim();
     if (normalized.contains('paid') ||
         normalized.contains('lunas') ||
-        normalized.contains('success') ||
-        normalized.contains('selesai')) {
+        normalized.contains('success')) {
       return 'Lunas';
+    }
+    if (normalized.contains('completed') || normalized.contains('selesai')) {
+      return 'Selesai';
     }
     if (normalized.contains('cancel') ||
         normalized.contains('batal') ||
@@ -74,19 +124,25 @@ class BookingItem {
         normalized.contains('reject')) {
       return 'Dibatalkan';
     }
+    if (normalized.contains('confirmed') || normalized.contains('confirm')) {
+      return 'Dikonfirmasi';
+    }
     return 'Belum Bayar';
   }
 
   static String _durationLabel(Map<String, dynamic> json) {
-    final duration =
+    final totalNights =
+        json['total_nights'] ??
         json['duration'] ??
         json['duration_days'] ??
         json['nights'] ??
         json['total_days'];
-    final parsed = _intValue(duration);
+    final parsed = _intValue(totalNights);
     if (parsed > 0) return '$parsed malam';
-    final checkIn = '${json['check_in'] ?? json['start_date'] ?? ''}';
-    final checkOut = '${json['check_out'] ?? json['end_date'] ?? ''}';
+    final checkIn =
+        '${json['check_in_date'] ?? json['check_in'] ?? json['start_date'] ?? ''}';
+    final checkOut =
+        '${json['check_out_date'] ?? json['check_out'] ?? json['end_date'] ?? ''}';
     if (checkIn.isNotEmpty && checkOut.isNotEmpty) {
       final start = DateTime.tryParse(checkIn);
       final end = DateTime.tryParse(checkOut);
@@ -104,18 +160,8 @@ class BookingItem {
     final date = DateTime.tryParse(raw);
     if (date == null) return raw;
     const months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }

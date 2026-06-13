@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api_config.dart';
 import '../../core/app_colors.dart';
 import '../../models/kos_item.dart';
 import '../../providers/customer_room_provider.dart';
@@ -11,6 +12,7 @@ import '../../widgets/home_widgets.dart';
 import 'booking_history_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
+import '../../services/room_service.dart';
 
 class DetailScreen extends StatefulWidget {
   const DetailScreen({super.key, required this.item});
@@ -25,28 +27,48 @@ class _DetailScreenState extends State<DetailScreen> {
   bool _bookingOpen = false;
   bool _loading = false;
   KosItem? _detailItem;
+  List<KosItem> _roomTypes = const [];
+  KosItem? _selectedRoomType;
 
   KosItem get _item => _detailItem ?? widget.item;
 
   @override
   void initState() {
     super.initState();
-    _fetchDetail();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchDetail();
+    });
   }
 
   Future<void> _fetchDetail() async {
+    if (!mounted) return;
     if (widget.item.id == 0) return;
     setState(() => _loading = true);
+
+    KosItem? item;
+    List<KosItem> roomTypes = const [];
+
     try {
-      final item = await context.read<CustomerRoomProvider>().fetchRoomType(
+      item = await context.read<CustomerRoomProvider>().fetchRoomType(
         widget.item.id,
       );
-      if (!mounted) return;
-      setState(() => _detailItem = item);
-    } catch (_) {
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    try {
+      roomTypes = await const RoomService().fetchRoomTypes(
+        branchId: widget.item.id.toString(),
+        isActive: true,
+      );
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      if (item != null) _detailItem = item;
+      _roomTypes = roomTypes;
+      _loading = false;
+    });
   }
 
   @override
@@ -61,6 +83,17 @@ class _DetailScreenState extends State<DetailScreen> {
               child: Column(
                 children: [
                   const HomeHeader(),
+                  SizedBox(
+                    height: 2,
+                    child: _loading
+                        ? const LinearProgressIndicator(
+                            backgroundColor: Colors.transparent,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.gold,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                   Expanded(
                     child: ListView(
                       physics: const BouncingScrollPhysics(),
@@ -87,25 +120,248 @@ class _DetailScreenState extends State<DetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        DetailImage(imageUrl: item.imageUrl),
-                        if (_loading) ...[
-                          const SizedBox(height: 8),
-                          const Center(
-                            child: SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.gold,
-                              ),
-                            ),
-                          ),
-                        ],
+                        DetailImage(
+                          photos: item.photos,
+                          imageUrl: item.imageUrl,
+                        ),
                         const SizedBox(height: 10),
                         DetailInfoCard(
                           item: item,
-                          onOrder: () => setState(() => _bookingOpen = true),
+                          onOrder: () {
+                            if (_roomTypes.isNotEmpty) {
+                              setState(() {
+                                _selectedRoomType = _roomTypes.firstWhere(
+                                  (r) => r.availableRooms > 0,
+                                  orElse: () => _roomTypes.first,
+                                );
+                                _bookingOpen = true;
+                              });
+                            } else {
+                              setState(() {
+                                _selectedRoomType = null;
+                                _bookingOpen = true;
+                              });
+                            }
+                          },
                         ),
+                        if (_roomTypes.isNotEmpty) ...[
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Pilihan Tipe Kamar',
+                            style: TextStyle(
+                              color: AppColors.navy,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ..._roomTypes.map((roomType) {
+                            final isSoldOut = roomType.availableRooms <= 0;
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 14),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.navy.withValues(alpha: .12),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.navy.withValues(alpha: .04),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (roomType.photos.isNotEmpty) ...[
+                                    SizedBox(
+                                      height: 110,
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        physics: const BouncingScrollPhysics(),
+                                        itemCount: roomType.photos.length,
+                                        separatorBuilder: (context, index) => const SizedBox(width: 8),
+                                        itemBuilder: (context, index) {
+                                          final photoUrl = roomType.photos[index];
+                                          final cleanUrl = photoUrl.startsWith('http')
+                                              ? photoUrl
+                                              : ApiConfig.storageUrl(photoUrl);
+                                          return ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Image.network(
+                                              cleanUrl,
+                                              width: 165,
+                                              height: 110,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Container(
+                                                  width: 165,
+                                                  height: 110,
+                                                  color: const Color(0xFFEFEDEA),
+                                                  child: const Icon(
+                                                    Icons.bed_rounded,
+                                                    color: AppColors.gold,
+                                                    size: 32,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ] else ...[
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        roomType.imageUrl,
+                                        width: double.infinity,
+                                        height: 110,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: double.infinity,
+                                            height: 110,
+                                            color: const Color(0xFFEFEDEA),
+                                            child: const Icon(
+                                              Icons.bed_rounded,
+                                              color: AppColors.gold,
+                                              size: 32,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          roomType.name,
+                                          style: const TextStyle(
+                                            color: AppColors.navy,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        '${roomType.price} /hari',
+                                        style: const TextStyle(
+                                          color: AppColors.gold,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.square_foot, color: AppColors.gold, size: 12),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Luas: ${roomType.area}',
+                                        style: const TextStyle(
+                                          color: AppColors.navy,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        isSoldOut ? 'Habis' : 'Sisa ${roomType.availableRooms} Kamar',
+                                        style: TextStyle(
+                                          color: isSoldOut ? Colors.red : Colors.green,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (roomType.description.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      roomType.description,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: AppColors.navy.withValues(alpha: .72),
+                                        fontSize: 11,
+                                        height: 1.4,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                  if (roomType.facilities.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 4,
+                                      runSpacing: 4,
+                                      children: roomType.facilities
+                                          .map((fac) => Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 3,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.navy.withValues(alpha: .06),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  fac,
+                                                  style: const TextStyle(
+                                                    color: AppColors.navy,
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                              ))
+                                          .toList(),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 34,
+                                    child: FilledButton(
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: AppColors.navy,
+                                        foregroundColor: AppColors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      onPressed: isSoldOut
+                                          ? null
+                                          : () {
+                                              setState(() {
+                                                _selectedRoomType = roomType;
+                                                _bookingOpen = true;
+                                              });
+                                            },
+                                      child: const Text(
+                                        'Pesan Tipe Ini',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
                       ],
                     ),
                   ),
@@ -167,14 +423,19 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
             ),
           ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 360),
-            curve: Curves.easeOutCubic,
+          Positioned(
             left: 0,
             right: 0,
-            bottom: _bookingOpen ? 0 : -510,
-            child: BookingSheet(
-              onClose: () => setState(() => _bookingOpen = false),
+            bottom: 0,
+            child: AnimatedSlide(
+              offset: _bookingOpen ? Offset.zero : const Offset(0, 1),
+              duration: const Duration(milliseconds: 360),
+              curve: Curves.easeOutCubic,
+              child: BookingSheet(
+                roomTypes: _roomTypes,
+                initialRoomType: _selectedRoomType,
+                onClose: () => setState(() => _bookingOpen = false),
+              ),
             ),
           ),
         ],
@@ -183,53 +444,179 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 }
 
-class DetailImage extends StatelessWidget {
-  const DetailImage({super.key, required this.imageUrl});
+class DetailImage extends StatefulWidget {
+  const DetailImage({super.key, required this.photos, required this.imageUrl});
 
+  final List<String> photos;
   final String imageUrl;
 
   @override
+  State<DetailImage> createState() => _DetailImageState();
+}
+
+class _DetailImageState extends State<DetailImage> {
+  int _currentIndex = 0;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Collect all valid photo paths/URLs
+    final List<String> displayPhotos = [];
+    
+    // Add all branch/room photos
+    for (final photo in widget.photos) {
+      if (photo.trim().isNotEmpty) {
+        displayPhotos.add(photo.trim());
+      }
+    }
+    
+    // Fallback to primary imageUrl if photos is empty
+    if (displayPhotos.isEmpty && widget.imageUrl.trim().isNotEmpty) {
+      displayPhotos.add(widget.imageUrl.trim());
+    }
+    
+    // Absolute fallback placeholder
+    if (displayPhotos.isEmpty) {
+      displayPhotos.add('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80');
+    }
+
     return Column(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Image.network(
-            imageUrl,
-            height: 190,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 190,
-                color: const Color(0xFFEFEDEA),
-                child: const Icon(
-                  Icons.bed_rounded,
-                  color: AppColors.gold,
-                  size: 58,
+        SizedBox(
+          height: 190, // Landscape height matching original design
+          width: double.infinity,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  itemCount: displayPhotos.length,
+                  itemBuilder: (context, index) {
+                    final photoUrl = displayPhotos[index];
+                    final cleanUrl = photoUrl.startsWith('http')
+                        ? photoUrl
+                        : ApiConfig.storageUrl(photoUrl);
+
+                    return Image.network(
+                      cleanUrl,
+                      fit: BoxFit.cover,
+                      cacheWidth: 600,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: const Color(0xFFEFEDEA),
+                          child: const Icon(
+                            Icons.bed_rounded,
+                            color: AppColors.gold,
+                            size: 58,
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
-              );
-            },
+                if (displayPhotos.length > 1) ...[
+                  // Left arrow
+                  Positioned(
+                    left: 8,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_currentIndex > 0) {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.navy.withValues(alpha: .5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.chevron_left_rounded,
+                            color: AppColors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Right arrow
+                  Positioned(
+                    right: 8,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_currentIndex < displayPhotos.length - 1) {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.navy.withValues(alpha: .5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (index) {
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: index == 0 ? 16 : 6,
-              height: 4,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                color: index == 0
-                    ? AppColors.navy.withValues(alpha: .42)
-                    : const Color(0xFFD9D9D9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-            );
-          }),
-        ),
+        if (displayPhotos.length > 1)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(displayPhotos.length, (index) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: index == _currentIndex ? 16 : 6,
+                height: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: index == _currentIndex
+                      ? AppColors.navy.withValues(alpha: .6)
+                      : const Color(0xFFD9D9D9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              );
+            }),
+          ),
       ],
     );
   }

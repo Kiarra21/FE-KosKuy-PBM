@@ -32,4 +32,60 @@ class BookingProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> createBooking({
+    required int roomTypeId,
+    required String checkInDate,
+    required String checkOutDate,
+    String? notes,
+  }) async {
+    _loading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _service.createBooking(
+        roomTypeId: roomTypeId,
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+        notes: notes,
+      );
+      return true;
+    } on AuthException catch (error) {
+      _errorMessage = error.message;
+      return false;
+    } catch (_) {
+      _errorMessage = 'Gagal membuat pesanan.';
+      return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> submitPayment({
+    required int bookingId,
+    required List<int> imageBytes,
+    required String filename,
+  }) async {
+    _loading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _service.submitPayment(
+        bookingId: bookingId,
+        imageBytes: imageBytes,
+        filename: filename,
+      );
+      return true;
+    } on AuthException catch (error) {
+      _errorMessage = error.message;
+      return false;
+    } catch (_) {
+      _errorMessage = 'Gagal mengirim bukti pembayaran.';
+      return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
 }

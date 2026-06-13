@@ -44,114 +44,171 @@ class _FilterSheetState extends State<FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 342,
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-      decoration: const BoxDecoration(
-        color: AppColors.navy,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 56,
-              height: 6,
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        height: 354,
+        padding: const EdgeInsets.all(10),
+        decoration: const BoxDecoration(
+          color: AppColors.navy,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Frame 27
+            SizedBox(
+              height: 33,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Rectangle 78
+                Container(
+                  width: 72,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC4C4C4),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                // Filter
+                const Text(
+                  'Filter',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    height: 22 / 15,
+                    color: AppColors.gold,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          const Center(
-            child: Text(
-              'Filter',
-              style: TextStyle(
-                color: AppColors.gold,
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          const FilterSectionTitle(label: 'Khusus'),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _types.map((type) {
-              return SelectableFilterChip(
-                label: type,
-                selected: _type == type,
-                onTap: () {
-                  setState(() {
-                    _type = _type == type ? null : type;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-          const FilterSectionTitle(label: 'Daerah'),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _areas.map((area) {
-              return SelectableFilterChip(
-                label: area,
-                selected: _area == area,
-                onTap: () {
-                  setState(() {
-                    _area = _area == area ? null : area;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const Spacer(),
+          const SizedBox(height: 10),
+          // Frame 30
           SizedBox(
             width: double.infinity,
-            height: 34,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.white,
-                foregroundColor: AppColors.navy,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            height: 60,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Khusus Title
+                const Text(
+                  'Khusus',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    height: 22 / 15,
+                    color: AppColors.gold,
+                  ),
                 ),
+                const SizedBox(height: 10),
+                // Frame 35 (types)
+                SizedBox(
+                  height: 27,
+                  child: Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: _types.map((type) {
+                      return SelectableFilterChip(
+                        label: type,
+                        selected: _type == type,
+                        onTap: () {
+                          setState(() {
+                            _type = _type == type ? null : type;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Frame 31
+          SizedBox(
+            width: double.infinity,
+            height: 92,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Daerah Title
+                const Text(
+                  'Daerah',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    height: 22 / 15,
+                    color: AppColors.gold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Frame 35 (areas)
+                SizedBox(
+                  height: 59,
+                  child: Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: _areas.map((area) {
+                      return SelectableFilterChip(
+                        label: area,
+                        selected: _area == area,
+                        onTap: () {
+                          setState(() {
+                            _area = _area == area ? null : area;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Frame 36
+          const SizedBox(height: 33),
+          const SizedBox(height: 10),
+          // Frame 37 (Terapkan)
+          SizedBox(
+            width: double.infinity,
+            height: 33,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF2B3F6C),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               ),
               onPressed: () => widget.onApply(_type, _area),
               child: const Text(
                 'Terapkan',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  height: 22 / 15,
+                  color: Color(0xFF2B3F6C),
+                ),
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          // Frame 38
+          const SizedBox(height: 33),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
-
-class FilterSectionTitle extends StatelessWidget {
-  const FilterSectionTitle({super.key, required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: const TextStyle(
-        color: AppColors.gold,
-        fontSize: 13,
-        fontWeight: FontWeight.w900,
-      ),
-    );
-  }
 }
 
 class SelectableFilterChip extends StatelessWidget {
@@ -173,28 +230,28 @@ class SelectableFilterChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
-        height: 28,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        alignment: Alignment.center,
+        height: 27,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.white : AppColors.gold,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            if (selected)
-              BoxShadow(
-                color: AppColors.white.withValues(alpha: .22),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
+          color: selected ? Colors.white : AppColors.gold,
+          borderRadius: BorderRadius.circular(22),
         ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.navy,
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                color: Color(0xFF2B3F6C),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                height: 22 / 15,
+              ),
+            ),
+          ],
         ),
       ),
     );

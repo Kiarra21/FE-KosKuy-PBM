@@ -45,7 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchRooms();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchRooms();
+    });
   }
 
   Future<void> _fetchRooms() async {
@@ -277,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
             curve: Curves.easeOutCubic,
             left: 0,
             right: 0,
-            bottom: _filterOpen ? 0 : -360,
+            bottom: _filterOpen ? 0 : -370,
             child: FilterSheet(
               initialType: _selectedType,
               initialArea: _selectedArea,
