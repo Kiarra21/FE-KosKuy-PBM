@@ -14,6 +14,9 @@ class BranchItem {
     required this.photos,
     required this.totalRooms,
     required this.totalGuests,
+    required this.minPrice,
+    required this.minRoomSize,
+    required this.facilities,
   });
 
   factory BranchItem.fromJson(Map<String, dynamic> json) {
@@ -32,6 +35,10 @@ class BranchItem {
       photos: _photosFromJson(json['photos']),
       totalRooms: _intValue(json['total_rooms'] ?? json['rooms_count']),
       totalGuests: _intValue(json['total_guests'] ?? json['guests_count']),
+      // Laravel withMin/loadMin menghasilkan key: room_types_min_price
+      minPrice: _doubleValue(json['room_types_min_price']),
+      minRoomSize: _intValue(json['room_types_min_room_size']),
+      facilities: _facilitiesFromJson(json['facilities']),
     );
   }
 
@@ -48,10 +55,22 @@ class BranchItem {
   final int totalRooms;
   final int totalGuests;
 
+  /// Harga minimum dari semua tipe kamar cabang ini (0 jika belum ada tipe kamar)
+  final double minPrice;
+
+  /// Ukuran kamar minimum (m²) dari semua tipe kamar cabang ini
+  final int minRoomSize;
+  
+  /// Daftar nama fasilitas cabang ini
+  final List<String> facilities;
+
   BranchItem copyWith({
     List<String>? photos,
     int? totalRooms,
     int? totalGuests,
+    double? minPrice,
+    int? minRoomSize,
+    List<String>? facilities,
   }) {
     return BranchItem(
       id: id,
@@ -66,6 +85,9 @@ class BranchItem {
       photos: photos ?? this.photos,
       totalRooms: totalRooms ?? this.totalRooms,
       totalGuests: totalGuests ?? this.totalGuests,
+      minPrice: minPrice ?? this.minPrice,
+      minRoomSize: minRoomSize ?? this.minRoomSize,
+      facilities: facilities ?? this.facilities,
     );
   }
 
@@ -77,6 +99,13 @@ class BranchItem {
   static int _intValue(dynamic value) {
     if (value is int) return value;
     return int.tryParse('$value') ?? 0;
+  }
+
+  static double _doubleValue(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse('$value') ?? 0.0;
   }
 
   static bool _boolValue(dynamic value, {required bool fallback}) {
@@ -100,6 +129,17 @@ class BranchItem {
         })
         .where((item) => item.trim().isNotEmpty)
         .map(ApiConfig.storageUrl)
+        .toList();
+  }
+
+  static List<String> _facilitiesFromJson(dynamic value) {
+    if (value is! List) return const [];
+    return value
+        .map((item) {
+          if (item is Map) return '${item['name'] ?? ''}';
+          return '$item';
+        })
+        .where((item) => item.trim().isNotEmpty)
         .toList();
   }
 }

@@ -25,7 +25,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchBookings();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetchBookings();
+    });
   }
 
   Future<void> _fetchBookings() async {
@@ -70,11 +72,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                           errorMessage: bookingProvider.errorMessage,
                           items: bookingProvider.items,
                           onRetry: _fetchBookings,
-                          onPay: () {
-                            Navigator.of(context).push(
-                              SlidePageRoute(child: const PaymentScreen()),
-                            );
-                          },
                         ),
                       ),
                     ],
@@ -133,7 +130,6 @@ class _HistoryContent extends StatelessWidget {
     required this.errorMessage,
     required this.items,
     required this.onRetry,
-    required this.onPay,
   });
 
   final int selectedTab;
@@ -141,7 +137,6 @@ class _HistoryContent extends StatelessWidget {
   final String? errorMessage;
   final List<BookingItem> items;
   final VoidCallback onRetry;
-  final VoidCallback onPay;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +146,7 @@ class _HistoryContent extends StatelessWidget {
       return HistoryErrorState(message: error, onRetry: onRetry);
     }
     final filteredItems = items.where((item) {
-      if (selectedTab == 1) return item.isPaid;
+      if (selectedTab == 1) return item.isCompleted;
       if (selectedTab == 2) return item.isCancelled;
       return item.isActive;
     }).toList();
@@ -162,19 +157,27 @@ class _HistoryContent extends StatelessWidget {
       children: filteredItems.map((item) {
         final statusColor = item.isCancelled
             ? Colors.red.withValues(alpha: .18)
-            : item.isPaid
+            : item.isCompleted
             ? Colors.greenAccent
+            : item.isWaitingVerification || item.isPaid
+            ? Colors.blueAccent.withValues(alpha: .5)
             : Colors.yellowAccent;
         return BookingHistoryCard(
           item: item,
           status: item.status,
           statusColor: statusColor,
-          actionLabel: item.isPaid
+          actionLabel: item.isCompleted
               ? 'Review'
-              : item.isCancelled
-              ? ''
-              : 'Bayar Sekarang',
-          onAction: item.isActive ? onPay : () {},
+              : item.isUnpaid
+              ? 'Bayar Sekarang'
+              : '',
+          onAction: () {
+            if (item.isUnpaid) {
+              Navigator.of(context).push(
+                SlidePageRoute(child: PaymentScreen(booking: item)),
+              );
+            }
+          },
           cancelled: item.isCancelled,
         );
       }).toList(),
