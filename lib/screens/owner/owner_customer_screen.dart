@@ -105,7 +105,7 @@ class _OwnerCustomerScreenState extends State<OwnerCustomerScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              const HomeHeader(),
+              const HomeHeader(showNotification: false),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 14, 12, 8),
                 child: Column(

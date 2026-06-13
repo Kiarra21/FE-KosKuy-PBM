@@ -166,31 +166,48 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              const HomeHeader(),
+              const HomeHeader(showNotification: false),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Manajemen Pembayaran',
-                            style: TextStyle(
-                              color: AppColors.navy,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Manajemen Pembayaran',
+                        style: TextStyle(
+                          color: AppColors.navy,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
                         ),
-                        _StatusMenu(
-                          value: _status,
-                          onChanged: (value) {
-                            setState(() => _status = value);
-                            _fetch();
-                          },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _StatusFilter(
+                      value: _status,
+                      options: const [
+                        _FilterOption('', 'Semua', Icons.layers_rounded),
+                        _FilterOption(
+                          'unpaid',
+                          'Belum Bayar',
+                          Icons.money_off_csred_rounded,
+                        ),
+                        _FilterOption(
+                          'pending',
+                          'Menunggu',
+                          Icons.hourglass_top_rounded,
+                        ),
+                        _FilterOption('paid', 'Valid', Icons.verified_rounded),
+                        _FilterOption(
+                          'rejected',
+                          'Ditolak',
+                          Icons.cancel_rounded,
                         ),
                       ],
+                      onChanged: (value) {
+                        setState(() => _status = value);
+                        _fetch();
+                      },
                     ),
                     const SizedBox(height: 10),
                     const AdminBranchBadge(),
@@ -318,7 +335,7 @@ class _PaymentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actionable = item.status == AdminPaymentStatus.pending;
+    final actionable = item.canReview;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
@@ -342,7 +359,7 @@ class _PaymentCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _Badge(label: item.status.label, color: _paymentColor(item)),
+              _Badge(label: item.displayStatus, color: _paymentColor(item)),
             ],
           ),
           const SizedBox(height: 8),
@@ -370,7 +387,7 @@ class _PaymentCard extends StatelessWidget {
               TextButton.icon(
                 onPressed: onOpenProof,
                 icon: const Icon(Icons.image_rounded, size: 16),
-                label: const Text('Bukti'),
+                label: Text(item.hasProof ? 'Bukti' : 'Belum Upload'),
                 style: TextButton.styleFrom(foregroundColor: AppColors.gold),
               ),
             ],
@@ -409,28 +426,87 @@ class _PaymentCard extends StatelessWidget {
   }
 }
 
-class _StatusMenu extends StatelessWidget {
-  const _StatusMenu({required this.value, required this.onChanged});
+class _StatusFilter extends StatelessWidget {
+  const _StatusFilter({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
 
   final String value;
+  final List<_FilterOption> options;
   final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: value,
-        borderRadius: BorderRadius.circular(10),
-        items: const [
-          DropdownMenuItem(value: '', child: Text('Semua')),
-          DropdownMenuItem(value: 'pending', child: Text('Menunggu')),
-          DropdownMenuItem(value: 'paid', child: Text('Valid')),
-          DropdownMenuItem(value: 'rejected', child: Text('Ditolak')),
-        ],
-        onChanged: (value) => onChanged(value ?? ''),
+    return SizedBox(
+      height: 38,
+      width: double.infinity,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: options.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final option = options[index];
+          final selected = option.value == value;
+          return InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () => onChanged(option.value),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.navy : AppColors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: selected ? AppColors.navy : AppColors.gold,
+                  width: 1.4,
+                ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.navy.withValues(alpha: 0.16),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : const [],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    option.icon,
+                    size: 15,
+                    color: selected ? AppColors.gold : AppColors.navy,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    option.label,
+                    style: TextStyle(
+                      color: selected ? AppColors.white : AppColors.navy,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
+}
+
+class _FilterOption {
+  const _FilterOption(this.value, this.label, this.icon);
+
+  final String value;
+  final String label;
+  final IconData icon;
 }
 
 class _InfoLine extends StatelessWidget {
@@ -492,6 +568,7 @@ class _Badge extends StatelessWidget {
 }
 
 Color _paymentColor(AdminPaymentItem item) {
+  if (!item.hasPaymentRecord) return AppColors.gold;
   switch (item.status) {
     case AdminPaymentStatus.pending:
       return AppColors.gold;

@@ -25,19 +25,59 @@ class AdminManagementService {
 
   Future<List<AdminPaymentItem>> fetchPayments({String? status}) async {
     final items = await _getList('/bookings');
-    final payments = items.where(_hasPaymentData).map((item) {
-      final payment = item['payment'];
-      if (payment is Map) {
-        return AdminPaymentItem.fromJson(
-          payment.cast<String, dynamic>(),
-          bookingJson: item,
+    final payments = <AdminPaymentItem>[];
+    for (final item in items) {
+      final payment = _paymentMap(item);
+      if (payment != null) {
+        payments.add(
+          AdminPaymentItem.fromJson(
+            payment,
+            bookingJson: item,
+            hasPaymentRecord: true,
+          ),
+        );
+        continue;
+      }
+      if (_shouldShowBookingInPayments(item)) {
+        payments.add(
+          AdminPaymentItem.fromJson(
+            item,
+            bookingJson: item,
+            hasPaymentRecord: false,
+          ),
         );
       }
-      return AdminPaymentItem.fromJson(item);
-    }).toList();
+    }
     if (status == null || status.isEmpty) return payments;
+    if (status == 'unpaid') {
+      return payments.where((item) => !item.hasPaymentRecord).toList();
+    }
     final expected = AdminPaymentStatus.from(status);
-    return payments.where((item) => item.status == expected).toList();
+    return payments
+        .where((item) => item.hasPaymentRecord && item.status == expected)
+        .toList();
+  }
+
+  Future<List<AdminReviewItem>> fetchBranchReviews(int branchId) async {
+    final items = await _getList('/branches/$branchId/reviews');
+    return items.map(AdminReviewItem.fromJson).toList();
+  }
+
+  Map<String, dynamic>? _paymentMap(Map<String, dynamic> item) {
+    for (final key in ['payment', 'latest_payment']) {
+      final payment = item[key];
+      if (payment is Map && payment.isNotEmpty) {
+        return payment.cast<String, dynamic>();
+      }
+    }
+    if (_hasPaymentData(item)) return item;
+    return null;
+  }
+
+  bool _shouldShowBookingInPayments(Map<String, dynamic> item) {
+    final rawStatus = '${item['status'] ?? item['booking_status'] ?? ''}';
+    final bookingStatus = AdminBookingStatus.from(rawStatus);
+    return bookingStatus == AdminBookingStatus.confirmed;
   }
 
   Future<List<ManagedRoom>> fetchAvailableRooms(int roomTypeId) async {

@@ -21,7 +21,7 @@ class OwnerManagementScreen extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-              const HomeHeader(),
+              const HomeHeader(showNotification: false),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(12, 16, 12, 22),

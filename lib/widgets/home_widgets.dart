@@ -5,7 +5,9 @@ import '../models/kos_item.dart';
 import 'common_widgets.dart';
 
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({super.key});
+  const HomeHeader({super.key, this.showNotification = true});
+
+  final bool showNotification;
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +28,14 @@ class HomeHeader extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              color: AppColors.gold,
+          if (showNotification)
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.notifications_none_rounded,
+                color: AppColors.gold,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -72,133 +75,133 @@ class KosCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-              flex: 9,
-              child: Image.network(
-                item.imageUrl,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-                cacheWidth: 350,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: const Color(0xFFEFEDEA),
-                    child: const Icon(
-                      Icons.bed_rounded,
-                      color: AppColors.gold,
-                      size: 44,
-                    ),
-                  );
-                },
-              ),
-            ),
-            Expanded(
-              flex: 14,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 42,
+            flex: 9,
+            child: Image.network(
+              item.imageUrl,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              cacheWidth: 350,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFFEFEDEA),
+                  child: const Icon(
+                    Icons.bed_rounded,
                     color: AppColors.gold,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          height: 20,
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: item.typeColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            item.type,
-                            style: const TextStyle(
-                              color: AppColors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    size: 44,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        InfoLine(icon: Icons.location_on, text: item.address),
-                        const SizedBox(height: 4),
-                        InfoLine(icon: Icons.square_foot, text: item.area),
-                        const SizedBox(height: 4),
-                        InfoLine(
-                          icon: Icons.directions_walk,
-                          text: item.distance,
-                        ),
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 4,
-                          runSpacing: 4,
-                          children: item.facilities
-                              .take(4)
-                              .map((facility) => FacilityChip(label: facility))
-                              .toList(),
-                        ),
-                        const SizedBox(height: 8),
-                        Text.rich(
-                          TextSpan(
-                            text: 'Harga sekitar ',
-                            children: [
-                              TextSpan(
-                                text: item.price,
-                                style: const TextStyle(
-                                  color: AppColors.gold,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const TextSpan(text: ' /hari'),
-                            ],
-                          ),
+                );
+              },
+            ),
+          ),
+          Expanded(
+            flex: 14,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 42,
+                  color: AppColors.gold,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppColors.white,
                             fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
+                      ),
+                      Container(
+                        height: 20,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: item.typeColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          item.type,
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      InfoLine(icon: Icons.location_on, text: item.address),
+                      const SizedBox(height: 4),
+                      InfoLine(icon: Icons.square_foot, text: item.area),
+                      const SizedBox(height: 4),
+                      InfoLine(
+                        icon: Icons.directions_walk,
+                        text: item.distance,
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: item.facilities
+                            .take(4)
+                            .map((facility) => FacilityChip(label: facility))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 8),
+                      Text.rich(
+                        TextSpan(
+                          text: 'Harga sekitar ',
                           children: [
-                            Expanded(
-                              child: SmallActionButton(
-                                label: 'Detail',
-                                color: AppColors.white,
-                                textColor: AppColors.navy,
-                                onTap: onDetailTap,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: SmallActionButton(
-                                label: 'Pesan Sekarang',
+                            TextSpan(
+                              text: item.price,
+                              style: const TextStyle(
                                 color: AppColors.gold,
-                                textColor: AppColors.white,
-                                onTap: onOrderTap,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
+                            const TextSpan(text: ' /hari'),
                           ],
                         ),
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SmallActionButton(
+                              label: 'Detail',
+                              color: AppColors.white,
+                              textColor: AppColors.navy,
+                              onTap: onDetailTap,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: SmallActionButton(
+                              label: 'Pesan Sekarang',
+                              color: AppColors.gold,
+                              textColor: AppColors.white,
+                              onTap: onOrderTap,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

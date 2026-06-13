@@ -343,7 +343,7 @@ class _OwnerBranchFormScreenState extends State<OwnerBranchFormScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              const HomeHeader(),
+              const HomeHeader(showNotification: false),
               Expanded(
                 child: ListView(
                   physics: const BouncingScrollPhysics(),

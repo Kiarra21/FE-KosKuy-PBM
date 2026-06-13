@@ -78,7 +78,7 @@ class _OwnerRoomFormScreenState extends State<OwnerRoomFormScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              const HomeHeader(),
+              const HomeHeader(showNotification: false),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
                 child: Row(
