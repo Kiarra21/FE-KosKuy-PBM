@@ -21,6 +21,7 @@ class KosItem {
     required this.facilities,
     required this.availableRooms,
     required this.photos,
+    this.averageRating = 0.0,
   });
 
   factory KosItem.fromJson(Map<String, dynamic> json) {
@@ -80,6 +81,7 @@ class KosItem {
       facilities: branch.facilities,
       availableRooms: available,
       photos: branch.photos,
+      averageRating: branch.averageRating,
     );
   }
 
@@ -98,6 +100,7 @@ class KosItem {
   final List<String> facilities;
   final int availableRooms;
   final List<String> photos;
+  final double averageRating;
 
   static int _intValue(dynamic value) {
     if (value is int) return value;

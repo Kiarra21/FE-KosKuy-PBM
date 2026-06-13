@@ -59,6 +59,7 @@ class BookingHistoryCard extends StatelessWidget {
     required this.statusColor,
     required this.actionLabel,
     required this.onAction,
+    required this.onDetail,
     this.cancelled = false,
   });
 
@@ -67,20 +68,20 @@ class BookingHistoryCard extends StatelessWidget {
   final Color statusColor;
   final String actionLabel;
   final VoidCallback onAction;
+  final VoidCallback onDetail;
   final bool cancelled;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.navy,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: .15),
-            blurRadius: 10,
+            color: AppColors.navy.withValues(alpha: .18),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -88,163 +89,340 @@ class BookingHistoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Nama Kos & Status
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  item.kosName,
-                  style: const TextStyle(
-                    color: AppColors.gold,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: AppColors.gold, width: 3),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    color: AppColors.navy,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Divider(color: AppColors.white.withValues(alpha: .1), height: 1),
-          const SizedBox(height: 12),
-
-          // Body: Content
-          if (cancelled)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Text(
-                  'Pesanan ini telah dibatalkan',
-                  style: TextStyle(
-                    color: Colors.redAccent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            )
-          else ...[
-            _buildRow('Harga Kamar', item.price, subtitle: item.roomLabel),
-            const SizedBox(height: 12),
-            _buildRow('Total', item.total, subtitle: item.durationLabel, isTotal: true),
-            
-            const SizedBox(height: 16),
-            
-            // Footer: Deadline & Action Button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+            ),
+            child: Row(
               children: [
                 Expanded(
-                  child: status == 'Belum Bayar' && item.paymentDeadline.isNotEmpty
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Bayar Sebelum:',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.paymentDeadline,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
-                        )
-                      : const SizedBox.shrink(),
-                ),
-                if (actionLabel.isNotEmpty)
-                  SizedBox(
-                    height: 32,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.gold,
-                        foregroundColor: AppColors.navy,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: onAction,
-                      child: Text(
-                        actionLabel,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.kosName,
                         style: const TextStyle(
-                          fontSize: 11,
+                          color: AppColors.gold,
+                          fontSize: 14,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
+                      const SizedBox(height: 3),
+                      Text(
+                        item.roomLabel,
+                        style: TextStyle(
+                          color: AppColors.white.withValues(alpha: .65),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    status,
+                    style: const TextStyle(
+                      color: AppColors.navy,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
+                ),
               ],
             ),
-          ],
+          ),
+
+          DashedDivider(color: AppColors.white.withValues(alpha: .12)),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: cancelled
+                ? Column(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: Text(
+                            'Pesanan ini telah dibatalkan',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 34,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.white,
+                            side: BorderSide(color: AppColors.white.withValues(alpha: .3)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: onDetail,
+                          child: const Text(
+                            'Lihat Detail',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _DateBlock(
+                              label: 'Check-in',
+                              value: item.checkInDate,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Icon(
+                              Icons.arrow_forward_rounded,
+                              color: AppColors.white.withValues(alpha: .35),
+                              size: 16,
+                            ),
+                          ),
+                          Expanded(
+                            child: _DateBlock(
+                              label: 'Check-out',
+                              value: item.checkOutDate,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      _InvoiceRow(
+                        label: '${item.price} × ${item.durationLabel}',
+                        value: item.total,
+                      ),
+                      const SizedBox(height: 10),
+
+                      DashedDivider(color: AppColors.white.withValues(alpha: .12)),
+                      const SizedBox(height: 10),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total',
+                            style: TextStyle(
+                              color: AppColors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Text(
+                            item.total,
+                            style: const TextStyle(
+                              color: AppColors.gold,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      if (status == 'Belum Bayar' && item.paymentDeadline.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withValues(alpha: .12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.timer_outlined, color: Colors.redAccent, size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Bayar sebelum ${item.paymentDeadline}',
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 34,
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.white,
+                                  side: BorderSide(color: AppColors.white.withValues(alpha: .3)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: onDetail,
+                                child: const Text(
+                                  'Lihat Detail',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (actionLabel.isNotEmpty) ...[
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: SizedBox(
+                                height: 34,
+                                child: FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: AppColors.gold,
+                                    foregroundColor: AppColors.navy,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: onAction,
+                                  child: Text(
+                                    actionLabel,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildRow(String title, String value, {String? subtitle, bool isTotal = false}) {
+class _DateBlock extends StatelessWidget {
+  const _DateBlock({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: .06),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.white.withValues(alpha: .5),
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value.isEmpty ? '-' : value,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InvoiceRow extends StatelessWidget {
+  const _InvoiceRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: AppColors.white.withValues(alpha: .7),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ]
-            ],
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.white.withValues(alpha: .6),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            color: isTotal ? AppColors.gold : AppColors.white,
-            fontSize: isTotal ? 16 : 14,
-            fontWeight: FontWeight.w900,
+            color: AppColors.white.withValues(alpha: .85),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
+    );
+  }
+}
+
+class DashedDivider extends StatelessWidget {
+  const DashedDivider({super.key, required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final dashWidth = 4.0;
+        final dashSpace = 3.0;
+        final dashCount =
+            (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(dashCount, (_) {
+            return SizedBox(
+              width: dashWidth,
+              height: 1,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: color),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

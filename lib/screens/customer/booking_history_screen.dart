@@ -8,6 +8,7 @@ import '../../routes/slide_page_route.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/history_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import 'booking_detail_screen.dart';
 import 'home_screen.dart';
 import 'payment_screen.dart';
 import 'profile_screen.dart';
@@ -160,7 +161,7 @@ class _HistoryContent extends StatelessWidget {
             : item.isCompleted
             ? Colors.greenAccent
             : item.isWaitingVerification || item.isPaid
-            ? Colors.blueAccent.withValues(alpha: .5)
+            ? const Color(0xFF90CAF9)
             : Colors.yellowAccent;
         return BookingHistoryCard(
           item: item,
@@ -177,6 +178,14 @@ class _HistoryContent extends StatelessWidget {
                 SlidePageRoute(child: PaymentScreen(booking: item)),
               );
             }
+          },
+          onDetail: () {
+            Navigator.of(context).push(
+              SlidePageRoute(child: BookingDetailScreen(
+                booking: item,
+                statusColor: statusColor,
+              )),
+            );
           },
           cancelled: item.isCancelled,
         );

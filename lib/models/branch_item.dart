@@ -17,6 +17,7 @@ class BranchItem {
     required this.minPrice,
     required this.minRoomSize,
     required this.facilities,
+    this.averageRating = 0.0,
   });
 
   factory BranchItem.fromJson(Map<String, dynamic> json) {
@@ -64,6 +65,8 @@ class BranchItem {
   /// Daftar nama fasilitas cabang ini
   final List<String> facilities;
 
+  final double averageRating;
+
   BranchItem copyWith({
     List<String>? photos,
     int? totalRooms,
@@ -71,6 +74,7 @@ class BranchItem {
     double? minPrice,
     int? minRoomSize,
     List<String>? facilities,
+    double? averageRating,
   }) {
     return BranchItem(
       id: id,
@@ -88,6 +92,7 @@ class BranchItem {
       minPrice: minPrice ?? this.minPrice,
       minRoomSize: minRoomSize ?? this.minRoomSize,
       facilities: facilities ?? this.facilities,
+      averageRating: averageRating ?? this.averageRating,
     );
   }
 
