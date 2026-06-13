@@ -15,7 +15,7 @@ class HistoryTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tabs = ['Berlangsung', 'Lunas', 'Dibatalkan'];
+    final tabs = ['Berlangsung', 'Selesai', 'Dibatalkan'];
     return Row(
       children: List.generate(tabs.length, (index) {
         final selected = selectedIndex == index;
@@ -72,41 +72,47 @@ class BookingHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 18),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.navy,
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.navy.withValues(alpha: .15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: Nama Kos & Status
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Text(
                   item.kosName,
                   style: const TextStyle(
                     color: AppColors.gold,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
               Container(
-                height: 22,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   status,
                   style: TextStyle(
-                    color: status == 'Dibatalkan' ? Colors.red : AppColors.navy,
-                    fontSize: 9,
+                    color: AppColors.navy,
+                    fontSize: 10,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -114,129 +120,131 @@ class BookingHistoryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          Divider(color: AppColors.white.withValues(alpha: .1), height: 1),
+          const SizedBox(height: 12),
+
+          // Body: Content
           if (cancelled)
             const Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
+                padding: EdgeInsets.symmetric(vertical: 24),
                 child: Text(
-                  'Belum Bayar',
+                  'Pesanan ini telah dibatalkan',
                   style: TextStyle(
-                    color: Colors.red,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
+                    color: Colors.redAccent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             )
           else ...[
-            Text(
-              'Harga Kamar',
-              style: const TextStyle(
-                color: AppColors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 2),
+            _buildRow('Harga Kamar', item.price, subtitle: item.roomLabel),
+            const SizedBox(height: 12),
+            _buildRow('Total', item.total, subtitle: item.durationLabel, isTotal: true),
+            
+            const SizedBox(height: 16),
+            
+            // Footer: Deadline & Action Button
             Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.roomLabel,
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Text(
-                  item.price,
-                  style: const TextStyle(
-                    color: AppColors.gold,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Total',
-              style: const TextStyle(
-                color: AppColors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '1 Kamar, ${item.durationLabel}',
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Text(
-                  item.total,
-                  style: const TextStyle(
-                    color: AppColors.gold,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: Text(
-                    status == 'Belum Bayar' && item.paymentDeadline.isNotEmpty
-                        ? 'Bayar sebelum ${item.paymentDeadline}'
-                        : '',
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
+                  child: status == 'Belum Bayar' && item.paymentDeadline.isNotEmpty
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Bayar Sebelum:',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item.paymentDeadline,
+                              style: const TextStyle(
+                                color: Colors.redAccent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                if (actionLabel.isNotEmpty)
+                  SizedBox(
+                    height: 32,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.gold,
+                        foregroundColor: AppColors.navy,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: onAction,
+                      child: Text(
+                        actionLabel,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  width: 118,
-                  height: 28,
-                  child: actionLabel.isEmpty
-                      ? const SizedBox.shrink()
-                      : FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.gold,
-                            foregroundColor: AppColors.white,
-                            padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: onAction,
-                          child: Text(
-                            actionLabel,
-                            style: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                ),
               ],
             ),
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildRow(String title, String value, {String? subtitle, bool isTotal = false}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: AppColors.white.withValues(alpha: .7),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ]
+            ],
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: isTotal ? AppColors.gold : AppColors.white,
+            fontSize: isTotal ? 16 : 14,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
     );
   }
 }

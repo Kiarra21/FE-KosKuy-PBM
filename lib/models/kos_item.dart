@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/api_config.dart';
 import '../core/app_colors.dart';
+import 'branch_item.dart';
 
 class KosItem {
   const KosItem({
@@ -14,6 +15,7 @@ class KosItem {
     required this.area,
     required this.distance,
     required this.price,
+    required this.rawPrice,
     required this.imageUrl,
     required this.description,
     required this.facilities,
@@ -44,14 +46,40 @@ class KosItem {
       area: roomSize,
       distance: '${json['distance'] ?? '500 m dari Universitas Jember'}',
       price: _rupiah(json['price']),
+      rawPrice: _doubleValue(json['price'] ?? json['room_types_min_price']),
       imageUrl: photos.isNotEmpty
           ? ApiConfig.storageUrl(photos.first)
           : 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80',
       description:
           '${json['description'] ?? branch['description'] ?? 'Kamar nyaman dengan fasilitas kos yang siap digunakan.'}',
-      facilities: facilities.isEmpty ? const ['WiFi', 'AC'] : facilities,
+      facilities: facilities,
       availableRooms: _intValue(json['available_rooms_count']),
       photos: photos,
+    );
+  }
+
+  factory KosItem.fromBranch(BranchItem branch) {
+    final name = branch.name;
+    final type = _resolveType('', name);
+    final available = branch.totalRooms - branch.totalGuests;
+    return KosItem(
+      id: branch.id,
+      name: name,
+      type: type,
+      typeColor: type.toLowerCase() == 'putri'
+          ? AppColors.pink
+          : AppColors.blue,
+      address: branch.address,
+      areaName: _areaName(branch.address),
+      area: branch.minRoomSize > 0 ? '${branch.minRoomSize}m2' : '-',
+      distance: branch.phone != '-' ? branch.phone : '-',
+      price: branch.minPrice > 0 ? _rupiah(branch.minPrice) : '-',
+      rawPrice: branch.minPrice,
+      imageUrl: branch.photos.isNotEmpty ? branch.photos.first : '',
+      description: branch.description,
+      facilities: branch.facilities,
+      availableRooms: available,
+      photos: branch.photos,
     );
   }
 
@@ -64,6 +92,7 @@ class KosItem {
   final String area;
   final String distance;
   final String price;
+  final double rawPrice;
   final String imageUrl;
   final String description;
   final List<String> facilities;
@@ -73,6 +102,13 @@ class KosItem {
   static int _intValue(dynamic value) {
     if (value is int) return value;
     return int.tryParse('$value') ?? 0;
+  }
+
+  static double _doubleValue(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse('$value') ?? 0.0;
   }
 
   static String _resolveType(String rawType, String source) {

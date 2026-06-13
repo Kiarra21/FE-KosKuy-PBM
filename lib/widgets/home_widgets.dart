@@ -54,7 +54,7 @@ class KosCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 196,
+      height: 215,
       margin: const EdgeInsets.only(bottom: 14),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -69,83 +69,85 @@ class KosCard extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            flex: 9,
-            child: Image.network(
-              item.imageUrl,
-              height: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: const Color(0xFFEFEDEA),
-                  child: const Icon(
-                    Icons.bed_rounded,
-                    color: AppColors.gold,
-                    size: 44,
-                  ),
-                );
-              },
+              flex: 9,
+              child: Image.network(
+                item.imageUrl,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                cacheWidth: 350,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: const Color(0xFFEFEDEA),
+                    child: const Icon(
+                      Icons.bed_rounded,
+                      color: AppColors.gold,
+                      size: 44,
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          Expanded(
-            flex: 14,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 42,
-                  color: AppColors.gold,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
+            Expanded(
+              flex: 14,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 42,
+                    color: AppColors.gold,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
-                      ),
-                      Container(
-                        height: 20,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: item.typeColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          item.type,
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
+                        Container(
+                          height: 20,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: item.typeColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            item.type,
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 9, 12, 10),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         InfoLine(icon: Icons.location_on, text: item.address),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 4),
                         InfoLine(icon: Icons.square_foot, text: item.area),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 4),
                         InfoLine(
                           icon: Icons.directions_walk,
                           text: item.distance,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Wrap(
                           spacing: 4,
                           runSpacing: 4,
@@ -154,7 +156,7 @@ class KosCard extends StatelessWidget {
                               .map((facility) => FacilityChip(label: facility))
                               .toList(),
                         ),
-                        const Spacer(),
+                        const SizedBox(height: 8),
                         Text.rich(
                           TextSpan(
                             text: 'Harga sekitar ',
@@ -175,7 +177,7 @@ class KosCard extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             Expanded(
@@ -197,8 +199,7 @@ class KosCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ],
@@ -247,9 +248,7 @@ class FacilityChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 16,
-      padding: const EdgeInsets.symmetric(horizontal: 7),
-      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(10),

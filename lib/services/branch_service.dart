@@ -38,7 +38,61 @@ class BranchService {
       lastPage = payload is Map ? _intValue(payload['last_page']) : currentPage;
       currentPage++;
     } while (currentPage <= lastPage);
-    return branches;
+
+    // Fetch semua room types sekaligus untuk hitung min price & room_size per branch
+    final minValues = await _fetchRoomTypeMinValues();
+    return branches.map((branch) {
+      final mins = minValues[branch.id];
+      if (mins == null) return branch;
+      return branch.copyWith(minPrice: mins.$1, minRoomSize: mins.$2);
+    }).toList();
+  }
+
+  /// Fetch semua room types dan kembalikan `Map<branchId, (minPrice, minRoomSize)>`
+  Future<Map<int, (double, int)>> _fetchRoomTypeMinValues() async {
+    final result = <int, (double, int)>{};
+    var page = 1;
+    var lastPage = 1;
+    do {
+      final uri = Uri.parse(
+        '${ApiConfig.baseUrl}/room-types',
+      ).replace(queryParameters: {'is_active': '1', 'page': '$page'});
+      try {
+        final response = await _get(uri);
+        final body = _decode(response);
+        final payload = body['data'];
+        final items = payload is Map ? payload['data'] : payload;
+        if (items is List) {
+          for (final item in items.whereType<Map>()) {
+            final branchId = _intValue(item['branch_id']);
+            if (branchId == 0) continue;
+            final price = _doubleVal(item['price']);
+            final size = _intValue(item['room_size']);
+            if (!result.containsKey(branchId)) {
+              result[branchId] = (price, size);
+            } else {
+              final cur = result[branchId]!;
+              result[branchId] = (
+                price > 0 && (cur.$1 == 0 || price < cur.$1) ? price : cur.$1,
+                size > 0 && (cur.$2 == 0 || size < cur.$2) ? size : cur.$2,
+              );
+            }
+          }
+        }
+        lastPage = payload is Map ? _intValue(payload['last_page']) : 1;
+      } catch (_) {
+        break;
+      }
+      page++;
+    } while (page <= lastPage);
+    return result;
+  }
+
+  static double _doubleVal(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse('$value') ?? 0.0;
   }
 
   Future<BranchItem> fetchBranch(int id) async {
@@ -48,8 +102,17 @@ class BranchService {
     final branch = BranchItem.fromJson(
       (payload is Map ? payload : body).cast<String, dynamic>(),
     );
-    final photos = await fetchBranchPhotos(id);
-    final counts = await fetchBranchCounts(id);
+
+    List<String> photos = const [];
+    try {
+      photos = await fetchBranchPhotos(id);
+    } catch (_) {}
+
+    BranchCounts counts = const BranchCounts(totalRooms: 0, totalGuests: 0);
+    try {
+      counts = await fetchBranchCounts(id);
+    } catch (_) {}
+
     return branch.copyWith(
       photos: photos.isEmpty ? branch.photos : photos,
       totalRooms: counts.totalRooms,
