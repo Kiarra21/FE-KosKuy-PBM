@@ -15,6 +15,10 @@ class BookingItem {
     required this.checkInDate,
     required this.checkOutDate,
     required this.notes,
+    required this.hasReview,
+    required this.reviewRating,
+    required this.reviewComment,
+    required this.reviewCreatedAt,
     required this.paymentProofUrl,
   });
 
@@ -73,6 +77,10 @@ class BookingItem {
         json['check_out_date'] ?? json['check_out'] ?? json['end_date'],
       ),
       notes: '${json['notes'] ?? ''}',
+      hasReview: json['review'] != null,
+      reviewRating: _intValue((json['review'] as Map?)?['rating']),
+      reviewComment: '${(json['review'] as Map?)?['comment'] ?? ''}',
+      reviewCreatedAt: _dateLabel((json['review'] as Map?)?['created_at']),
       paymentProofUrl: proofUrl,
     );
   }
@@ -90,6 +98,10 @@ class BookingItem {
   final String checkInDate;
   final String checkOutDate;
   final String notes;
+  final bool hasReview;
+  final int reviewRating;
+  final String reviewComment;
+  final String reviewCreatedAt;
   final String paymentProofUrl;
 
   bool get isCompleted => status == 'Selesai';
