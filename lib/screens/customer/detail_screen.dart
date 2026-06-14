@@ -785,26 +785,11 @@ class DetailInfoCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppColors.white,
                     fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              Container(
-                height: 21,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: item.typeColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  item.type,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 9,
                     fontWeight: FontWeight.w900,
                   ),
                 ),

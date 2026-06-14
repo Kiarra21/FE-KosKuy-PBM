@@ -118,23 +118,6 @@ class KosCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Container(
-                        height: 20,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: item.typeColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          item.type,
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),

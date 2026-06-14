@@ -1,15 +1,10 @@
-import 'package:flutter/material.dart';
-
 import '../core/api_config.dart';
-import '../core/app_colors.dart';
 import 'branch_item.dart';
 
 class KosItem {
   const KosItem({
     required this.id,
     required this.name,
-    required this.type,
-    required this.typeColor,
     required this.address,
     required this.latitude,
     required this.longitude,
@@ -31,20 +26,12 @@ class KosItem {
     final branch = (json['branch'] as Map?)?.cast<String, dynamic>() ?? {};
     final photos = _photosFromJson(json['photos']);
     final name = '${json['name'] ?? 'KosKuy'}';
-    final branchName = '${branch['name'] ?? ''}';
-    final rawType =
-        '${json['type'] ?? json['gender'] ?? json['category'] ?? json['kos_type'] ?? ''}';
-    final type = _resolveType(rawType, '$name $branchName');
     final address = '${branch['address'] ?? json['address'] ?? '-'}';
     final roomSize = json['room_size'] == null ? '-' : '${json['room_size']}m2';
     final facilities = _facilitiesFromJson(json['facilities']);
     return KosItem(
       id: _intValue(json['id']),
       name: name,
-      type: type,
-      typeColor: type.toLowerCase() == 'putri'
-          ? AppColors.pink
-          : AppColors.blue,
       address: address,
       latitude: '${branch['latitude'] ?? json['latitude'] ?? ''}',
       longitude: '${branch['longitude'] ?? json['longitude'] ?? ''}',
@@ -66,15 +53,10 @@ class KosItem {
 
   factory KosItem.fromBranch(BranchItem branch) {
     final name = branch.name;
-    final type = _resolveType('', name);
     final available = branch.totalRooms - branch.totalGuests;
     return KosItem(
       id: branch.id,
       name: name,
-      type: type,
-      typeColor: type.toLowerCase() == 'putri'
-          ? AppColors.pink
-          : AppColors.blue,
       address: branch.address,
       latitude: branch.latitude,
       longitude: branch.longitude,
@@ -95,8 +77,6 @@ class KosItem {
 
   final String name;
   final int id;
-  final String type;
-  final Color typeColor;
   final String address;
   final String latitude;
   final String longitude;
@@ -123,20 +103,6 @@ class KosItem {
     if (value is double) return value;
     if (value is int) return value.toDouble();
     return double.tryParse('$value') ?? 0.0;
-  }
-
-  static String _resolveType(String rawType, String source) {
-    final normalizedType = rawType.toLowerCase();
-    final normalizedSource = source.toLowerCase();
-    if (normalizedType.contains('putri') ||
-        normalizedSource.contains('putri')) {
-      return 'Putri';
-    }
-    if (normalizedType.contains('putra') ||
-        normalizedSource.contains('putra')) {
-      return 'Putra';
-    }
-    return 'Putra';
   }
 
   static String _areaName(String address) {
