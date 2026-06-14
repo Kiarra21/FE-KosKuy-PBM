@@ -22,29 +22,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _filterOpen = false;
-  String? _selectedType;
   String? _selectedArea;
 
   List<KosItem> _filteredItems(List<KosItem> items) {
     return items.where((item) {
-      final matchType = _selectedType == null || item.type == _selectedType;
       final matchArea = _selectedArea == null || item.areaName == _selectedArea;
-      return matchType && matchArea;
+      return matchArea;
     }).toList();
   }
 
-  bool get _hasFilter => _selectedType != null || _selectedArea != null;
+  bool get _hasFilter => _selectedArea != null;
 
-  String get _filterLabel {
-    return [
-      if (_selectedType != null) _selectedType,
-      if (_selectedArea != null) _selectedArea,
-    ].join(', ');
-  }
-
-  List<String> _availableTypes(List<KosItem> items) {
-    return _uniqueSorted(items.map((item) => item.type));
-  }
+  String get _filterLabel => _selectedArea ?? '';
 
   List<String> _availableAreas(List<KosItem> items) {
     return _uniqueSorted(items.map((item) => item.areaName));
@@ -91,9 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final roomProvider = context.watch<CustomerRoomProvider>();
     final items = roomProvider.items;
     final filteredItems = _filteredItems(roomProvider.items);
-    final availableTypes = _availableTypes(items);
     final availableAreas = _availableAreas(items);
-    final typeCounts = _countsBy(items.map((item) => item.type));
     final areaCounts = _countsBy(items.map((item) => item.areaName));
     final loading = roomProvider.loading;
     final errorMessage = roomProvider.errorMessage;
@@ -187,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         GestureDetector(
                                           onTap: () {
                                             setState(() {
-                                              _selectedType = null;
                                               _selectedArea = null;
                                             });
                                           },
@@ -314,15 +300,11 @@ class _HomeScreenState extends State<HomeScreen> {
             right: 0,
             bottom: _filterOpen ? 0 : -MediaQuery.of(context).size.height,
             child: FilterSheet(
-              initialType: _selectedType,
               initialArea: _selectedArea,
-              types: availableTypes,
               areas: availableAreas,
-              typeCounts: typeCounts,
               areaCounts: areaCounts,
-              onApply: (type, area) {
+              onApply: (area) {
                 setState(() {
-                  _selectedType = type;
                   _selectedArea = area;
                   _filterOpen = false;
                 });

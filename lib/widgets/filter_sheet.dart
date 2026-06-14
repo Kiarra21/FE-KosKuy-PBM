@@ -5,40 +5,30 @@ import '../core/app_colors.dart';
 class FilterSheet extends StatefulWidget {
   const FilterSheet({
     super.key,
-    required this.initialType,
     required this.initialArea,
-    required this.types,
     required this.areas,
-    required this.typeCounts,
     required this.areaCounts,
     required this.onApply,
   });
 
-  final String? initialType;
   final String? initialArea;
-  final List<String> types;
   final List<String> areas;
-  final Map<String, int> typeCounts;
   final Map<String, int> areaCounts;
-  final void Function(String? type, String? area) onApply;
+  final void Function(String? area) onApply;
 
   @override
   State<FilterSheet> createState() => _FilterSheetState();
 }
 
 class _FilterSheetState extends State<FilterSheet> {
-  late String? _type = widget.initialType;
   late String? _area = widget.initialArea;
 
   @override
   void didUpdateWidget(covariant FilterSheet oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialType != widget.initialType ||
-        oldWidget.initialArea != widget.initialArea) {
-      _type = widget.initialType;
+    if (oldWidget.initialArea != widget.initialArea) {
       _area = widget.initialArea;
     }
-    if (_type != null && !widget.types.contains(_type)) _type = null;
     if (_area != null && !widget.areas.contains(_area)) _area = null;
   }
 
@@ -88,7 +78,6 @@ class _FilterSheetState extends State<FilterSheet> {
                     TextButton(
                       onPressed: () {
                         setState(() {
-                          _type = null;
                           _area = null;
                         });
                       },
@@ -104,23 +93,6 @@ class _FilterSheetState extends State<FilterSheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _FilterSection(
-                  title: 'Khusus',
-                  emptyLabel: 'Belum ada kategori tersedia.',
-                  children: widget.types.map((type) {
-                    return SelectableFilterChip(
-                      label: type,
-                      count: widget.typeCounts[type] ?? 0,
-                      selected: _type == type,
-                      onTap: () {
-                        setState(() {
-                          _type = _type == type ? null : type;
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 14),
                 _FilterSection(
                   title: 'Daerah',
                   emptyLabel: 'Belum ada daerah tersedia.',
@@ -149,7 +121,7 @@ class _FilterSheetState extends State<FilterSheet> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    onPressed: () => widget.onApply(_type, _area),
+                    onPressed: () => widget.onApply(_area),
                     child: const Text(
                       'Terapkan',
                       style: TextStyle(
