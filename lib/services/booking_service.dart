@@ -52,6 +52,7 @@ class BookingService {
     required int bookingId,
     required List<int> imageBytes,
     required String filename,
+    bool retried = false,
   }) async {
     final token = AuthSessionStore.instance.token;
     final request = http.MultipartRequest(
@@ -72,13 +73,14 @@ class BookingService {
     );
     final streamed = await request.send().timeout(const Duration(seconds: 30));
     final response = await http.Response.fromStream(streamed);
-    if (response.statusCode == 401) {
+    if (response.statusCode == 401 && !retried) {
       try {
         await const AuthService().refresh();
         return submitPayment(
           bookingId: bookingId,
           imageBytes: imageBytes,
           filename: filename,
+          retried: true,
         );
       } catch (_) {
         await AuthSessionStore.instance.clear();

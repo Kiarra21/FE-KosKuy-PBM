@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/provider_scope.dart';
 import '../providers/auth_provider.dart';
 import '../routes/role_router.dart';
 import '../routes/slide_page_route.dart';
@@ -57,6 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         phone: phone,
       );
       if (!mounted) return;
+      clearAllProviders(context);
       Navigator.of(context).pushReplacement(
         SlidePageRoute(child: RoleRouter.screenFor(session.user.role)),
       );

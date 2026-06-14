@@ -69,8 +69,10 @@ class AuthProvider extends ChangeNotifier {
     }
     try {
       await _service.refresh();
-    } catch (_) {
+    } on AuthException {
       await AuthSessionStore.instance.clear();
+    } catch (_) {
+      // Network error — keep existing session, token might still be valid
     }
     notifyListeners();
   }

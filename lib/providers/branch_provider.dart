@@ -23,6 +23,15 @@ class BranchProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   BranchItem? detailFor(int id) => _details[id];
 
+  void clear() {
+    _branches = const [];
+    _facilities = const [];
+    _details.clear();
+    _errorMessage = null;
+    _loading = false;
+    notifyListeners();
+  }
+
   Future<void> fetchBranches({int page = 1}) async {
     await _load(() async {
       _branches = await _service.fetchBranches(page: page);
