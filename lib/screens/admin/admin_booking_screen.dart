@@ -107,6 +107,29 @@ class _AdminBookingScreenState extends State<AdminBookingScreen> {
     }
   }
 
+  Future<void> _checkOut(AdminBookingItem item) async {
+    final confirmed = await _confirm(
+      'Selesaikan booking ${item.customerName}? Sistem akan memastikan check-in otomatis lalu mengosongkan kamar.',
+    );
+    if (!confirmed) return;
+    if (!mounted) return;
+    try {
+      await context.read<AdminManagementProvider>().checkOutBooking(
+        item.id,
+        status: _status,
+        autoCheckIn: !item.hasCheckedIn,
+      );
+      if (!mounted) return;
+      showAppTopNotification(
+        context,
+        message: 'Booking selesai dan kamar sudah dikosongkan.',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      showAppTopNotification(context, message: '$error');
+    }
+  }
+
   Future<bool> _confirm(String message) async {
     return await showDialog<bool>(
           context: context,
@@ -201,6 +224,7 @@ class _AdminBookingScreenState extends State<AdminBookingScreen> {
                     onRetry: _fetch,
                     onApprove: _approve,
                     onCancel: _cancel,
+                    onCheckOut: _checkOut,
                   ),
                 ),
               ),
@@ -221,6 +245,7 @@ class _BookingContent extends StatelessWidget {
     required this.onRetry,
     required this.onApprove,
     required this.onCancel,
+    required this.onCheckOut,
   });
 
   final bool loading;
@@ -229,6 +254,7 @@ class _BookingContent extends StatelessWidget {
   final Future<void> Function() onRetry;
   final ValueChanged<AdminBookingItem> onApprove;
   final ValueChanged<AdminBookingItem> onCancel;
+  final ValueChanged<AdminBookingItem> onCheckOut;
 
   @override
   Widget build(BuildContext context) {
@@ -286,6 +312,7 @@ class _BookingContent extends StatelessWidget {
           item: item,
           onApprove: () => onApprove(item),
           onCancel: () => onCancel(item),
+          onCheckOut: () => onCheckOut(item),
         );
       },
     );
@@ -297,15 +324,18 @@ class _BookingCard extends StatelessWidget {
     required this.item,
     required this.onApprove,
     required this.onCancel,
+    required this.onCheckOut,
   });
 
   final AdminBookingItem item;
   final VoidCallback onApprove;
   final VoidCallback onCancel;
+  final VoidCallback onCheckOut;
 
   @override
   Widget build(BuildContext context) {
     final actionable = item.status == AdminBookingStatus.pending;
+    final canCheckOut = item.canCheckOut;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
@@ -342,6 +372,8 @@ class _BookingCard extends StatelessWidget {
             icon: Icons.event_available_rounded,
             text: _bookingDateText(item),
           ),
+          const SizedBox(height: 5),
+          _FlowBox(item: item),
           const SizedBox(height: 8),
           Text(
             item.total,
@@ -377,6 +409,21 @@ class _BookingCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+          if (canCheckOut) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.blue,
+                  foregroundColor: AppColors.white,
+                ),
+                onPressed: onCheckOut,
+                icon: const Icon(Icons.logout_rounded, size: 16),
+                label: const Text('Check Out & Selesaikan'),
+              ),
             ),
           ],
         ],
@@ -497,6 +544,70 @@ class _InfoLine extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _FlowBox extends StatelessWidget {
+  const _FlowBox({required this.item});
+
+  final AdminBookingItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(_flowIcon(item), color: AppColors.gold, size: 16),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.flowTitle,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.flowDescription,
+                  style: TextStyle(
+                    color: AppColors.white.withValues(alpha: 0.78),
+                    fontSize: 10,
+                    height: 1.2,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+IconData _flowIcon(AdminBookingItem item) {
+  switch (item.status) {
+    case AdminBookingStatus.pending:
+      return Icons.hourglass_top_rounded;
+    case AdminBookingStatus.confirmed:
+      return Icons.meeting_room_rounded;
+    case AdminBookingStatus.cancelled:
+      return Icons.cancel_rounded;
+    case AdminBookingStatus.completed:
+      return Icons.task_alt_rounded;
   }
 }
 

@@ -4,6 +4,7 @@ import '../models/admin_management_item.dart';
 import '../models/auth_session.dart';
 import '../models/managed_room.dart';
 import '../services/admin_management_service.dart';
+import '../services/auth_service.dart';
 
 class AdminManagementProvider extends ChangeNotifier {
   AdminManagementProvider({
@@ -82,8 +83,22 @@ class AdminManagementProvider extends ChangeNotifier {
     await fetchBookings(status: status);
   }
 
-  Future<void> checkOutBooking(int bookingId, {String? status}) async {
-    await _service.checkOutBooking(bookingId);
+  Future<void> checkOutBooking(
+    int bookingId, {
+    String? status,
+    bool autoCheckIn = false,
+  }) async {
+    try {
+      await _service.checkOutBooking(bookingId);
+    } catch (error) {
+      if (!autoCheckIn || !_needsAutoCheckIn(error)) rethrow;
+      try {
+        await _service.checkInBooking(bookingId);
+      } catch (checkInError) {
+        throw AuthException(_autoCheckInMessage(checkInError));
+      }
+      await _service.checkOutBooking(bookingId);
+    }
     await fetchBookings(status: status);
   }
 
@@ -94,5 +109,22 @@ class AdminManagementProvider extends ChangeNotifier {
   }) async {
     await _service.rejectPayment(paymentId: paymentId, reason: reason);
     await fetchPayments(status: status);
+  }
+
+  bool _needsAutoCheckIn(Object error) {
+    final message = '$error'.toLowerCase();
+    return message.contains('belum') &&
+        message.contains('check-in') &&
+        message.contains('pemesanan');
+  }
+
+  String _autoCheckInMessage(Object error) {
+    final message = '$error';
+    final normalized = message.toLowerCase();
+    if (normalized.contains('masa pemesanan') &&
+        normalized.contains('berakhir')) {
+      return 'Booking ini belum punya data check-in yang valid, sementara tanggal pemesanannya sudah dianggap berakhir oleh backend. Periksa tanggal booking atau data check-in di backend.';
+    }
+    return 'Tidak bisa membuat check-in otomatis: $message';
   }
 }
