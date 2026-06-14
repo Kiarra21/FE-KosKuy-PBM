@@ -42,6 +42,34 @@ class _HomeScreenState extends State<HomeScreen> {
     ].join(', ');
   }
 
+  List<String> _availableTypes(List<KosItem> items) {
+    return _uniqueSorted(items.map((item) => item.type));
+  }
+
+  List<String> _availableAreas(List<KosItem> items) {
+    return _uniqueSorted(items.map((item) => item.areaName));
+  }
+
+  Map<String, int> _countsBy(Iterable<String> values) {
+    final counts = <String, int>{};
+    for (final value in values) {
+      final clean = value.trim();
+      if (clean.isEmpty || clean == '-') continue;
+      counts[clean] = (counts[clean] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  List<String> _uniqueSorted(Iterable<String> values) {
+    final result = values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty && value != '-')
+        .toSet()
+        .toList();
+    result.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return result;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -61,7 +89,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final roomProvider = context.watch<CustomerRoomProvider>();
+    final items = roomProvider.items;
     final filteredItems = _filteredItems(roomProvider.items);
+    final availableTypes = _availableTypes(items);
+    final availableAreas = _availableAreas(items);
+    final typeCounts = _countsBy(items.map((item) => item.type));
+    final areaCounts = _countsBy(items.map((item) => item.areaName));
     final loading = roomProvider.loading;
     final errorMessage = roomProvider.errorMessage;
     return AppFrame(
@@ -279,10 +312,14 @@ class _HomeScreenState extends State<HomeScreen> {
             curve: Curves.easeOutCubic,
             left: 0,
             right: 0,
-            bottom: _filterOpen ? 0 : -370,
+            bottom: _filterOpen ? 0 : -MediaQuery.of(context).size.height,
             child: FilterSheet(
               initialType: _selectedType,
               initialArea: _selectedArea,
+              types: availableTypes,
+              areas: availableAreas,
+              typeCounts: typeCounts,
+              areaCounts: areaCounts,
               onApply: (type, area) {
                 setState(() {
                   _selectedType = type;

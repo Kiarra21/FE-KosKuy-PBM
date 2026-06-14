@@ -11,6 +11,8 @@ class KosItem {
     required this.type,
     required this.typeColor,
     required this.address,
+    required this.latitude,
+    required this.longitude,
     required this.areaName,
     required this.area,
     required this.distance,
@@ -44,6 +46,8 @@ class KosItem {
           ? AppColors.pink
           : AppColors.blue,
       address: address,
+      latitude: '${branch['latitude'] ?? json['latitude'] ?? ''}',
+      longitude: '${branch['longitude'] ?? json['longitude'] ?? ''}',
       areaName: _areaName(address),
       area: roomSize,
       distance: '${json['distance'] ?? '500 m dari Universitas Jember'}',
@@ -72,6 +76,8 @@ class KosItem {
           ? AppColors.pink
           : AppColors.blue,
       address: branch.address,
+      latitude: branch.latitude,
+      longitude: branch.longitude,
       areaName: _areaName(branch.address),
       area: branch.minRoomSize > 0 ? '${branch.minRoomSize}m2' : '-',
       distance: branch.phone != '-' ? branch.phone : '-',
@@ -92,6 +98,8 @@ class KosItem {
   final String type;
   final Color typeColor;
   final String address;
+  final String latitude;
+  final String longitude;
   final String areaName;
   final String area;
   final String distance;
