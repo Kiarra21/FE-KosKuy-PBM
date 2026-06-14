@@ -15,6 +15,8 @@ class AdminBookingItem {
     required this.total,
     required this.status,
     required this.rawStatus,
+    required this.hasCheckedIn,
+    required this.hasCheckedOut,
     this.payment,
   });
 
@@ -37,13 +39,105 @@ class AdminBookingItem {
         (roomType['branch'] as Map?)?.cast<String, dynamic>() ??
         {};
     final booking = (json['booking'] as Map?)?.cast<String, dynamic>() ?? {};
+    final checkProcess = _firstMap([
+      json['check_process'],
+      json['booking_check'],
+      json['booking_process'],
+      json['check_in_process'],
+      json['checkin_process'],
+      json['check_out_process'],
+      json['checkout_process'],
+      json['check_log'],
+      json['check_logs'],
+      json['checkin'],
+      json['checkins'],
+      json['check_in_data'],
+      json['check_out_data'],
+      json['latest_check_in'],
+      json['latest_checkin'],
+      json['latest_check_process'],
+      booking['check_process'],
+      booking['booking_check'],
+      booking['booking_process'],
+      booking['check_in_process'],
+      booking['checkin_process'],
+      booking['check_out_process'],
+      booking['checkout_process'],
+      booking['check_log'],
+      booking['check_logs'],
+      booking['checkin'],
+      booking['checkins'],
+      booking['check_in_data'],
+      booking['check_out_data'],
+      booking['latest_check_in'],
+      booking['latest_checkin'],
+      booking['latest_check_process'],
+    ]);
     final nestedBooking = booking.isEmpty
         ? null
         : BookingItem.fromJson(booking);
     final paymentJson =
         (json['payment'] as Map?)?.cast<String, dynamic>() ??
         (json['latest_payment'] as Map?)?.cast<String, dynamic>();
-    final rawStatus = '${json['status'] ?? json['booking_status'] ?? ''}';
+    final rawStatus =
+        '${json['status'] ?? json['booking_status'] ?? booking['status'] ?? ''}';
+    final hasCheckedIn =
+        _flagValue(
+          json['checked_in_at'] ??
+              json['check_in_at'] ??
+              json['actual_check_in_at'] ??
+              json['checked_in_date'] ??
+              json['is_checked_in'] ??
+              booking['checked_in_at'] ??
+              booking['check_in_at'] ??
+              booking['actual_check_in_at'] ??
+              booking['checked_in_date'] ??
+              booking['is_checked_in'] ??
+              checkProcess['checked_in_at'] ??
+              checkProcess['check_in_at'] ??
+              checkProcess['actual_check_in_at'] ??
+              checkProcess['checked_in_date'] ??
+              checkProcess['check_in_photo'] ??
+              checkProcess['is_checked_in'],
+        ) ||
+        _statusHas(rawStatus, const [
+          'check-in',
+          'check_in',
+          'checked-in',
+          'checked_in',
+          'checked in',
+          'inap',
+          'occupied',
+        ]);
+    final hasCheckedOut =
+        _flagValue(
+          json['checked_out_at'] ??
+              json['check_out_at'] ??
+              json['actual_check_out_at'] ??
+              json['checked_out_date'] ??
+              json['is_checked_out'] ??
+              booking['checked_out_at'] ??
+              booking['check_out_at'] ??
+              booking['actual_check_out_at'] ??
+              booking['checked_out_date'] ??
+              booking['is_checked_out'] ??
+              checkProcess['checked_out_at'] ??
+              checkProcess['check_out_at'] ??
+              checkProcess['actual_check_out_at'] ??
+              checkProcess['checked_out_date'] ??
+              checkProcess['check_out_photo'] ??
+              checkProcess['is_checked_out'],
+        ) ||
+        _statusHas(rawStatus, const [
+          'check-out',
+          'check_out',
+          'checked-out',
+          'checked_out',
+          'checked out',
+          'checkout',
+          'selesai',
+          'complete',
+        ]);
     final checkIn = _dateLabel(
       json['check_in_date'] ??
           json['checkin_date'] ??
@@ -101,6 +195,8 @@ class AdminBookingItem {
       total: _rupiah(json['total'] ?? json['total_price'] ?? json['amount']),
       status: AdminBookingStatus.from(rawStatus),
       rawStatus: rawStatus.isEmpty ? 'pending' : rawStatus,
+      hasCheckedIn: hasCheckedIn || hasCheckedOut,
+      hasCheckedOut: hasCheckedOut,
       payment: paymentJson == null
           ? null
           : AdminPaymentItem.fromJson(
@@ -123,7 +219,42 @@ class AdminBookingItem {
   final String total;
   final AdminBookingStatus status;
   final String rawStatus;
+  final bool hasCheckedIn;
+  final bool hasCheckedOut;
   final AdminPaymentItem? payment;
+
+  bool get canCheckOut =>
+      status == AdminBookingStatus.confirmed && !hasCheckedOut;
+
+  String get flowTitle {
+    switch (status) {
+      case AdminBookingStatus.pending:
+        return 'Menunggu verifikasi';
+      case AdminBookingStatus.confirmed:
+        return hasCheckedIn
+            ? 'Aktif, siap check-out'
+            : 'Aktif, check-in belum tersinkron';
+      case AdminBookingStatus.cancelled:
+        return 'Booking dibatalkan';
+      case AdminBookingStatus.completed:
+        return 'Selesai check-out';
+    }
+  }
+
+  String get flowDescription {
+    switch (status) {
+      case AdminBookingStatus.pending:
+        return 'Pilih nomor kamar untuk mengaktifkan booking.';
+      case AdminBookingStatus.confirmed:
+        return hasCheckedIn
+            ? 'Data check-in sudah ada. Tekan check-out saat tamu keluar.'
+            : 'Saat checkout, sistem akan coba membuat data check-in otomatis.';
+      case AdminBookingStatus.cancelled:
+        return 'Tidak ada aksi lanjutan untuk booking ini.';
+      case AdminBookingStatus.completed:
+        return 'Kamar sudah dikosongkan dan booking selesai.';
+    }
+  }
 }
 
 class AdminPaymentItem {
@@ -374,6 +505,37 @@ bool _boolValue(dynamic value) {
   final text = '${value ?? ''}'.toLowerCase();
   if (text == 'false' || text == '0' || text == 'no') return false;
   return true;
+}
+
+bool _flagValue(dynamic value) {
+  if (value == null) return false;
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final text = '$value'.trim().toLowerCase();
+  if (text.isEmpty || text == '-' || text == 'null') return false;
+  if (text == 'false' || text == '0' || text == 'no') return false;
+  return true;
+}
+
+bool _statusHas(String value, List<String> needles) {
+  final text = value.toLowerCase();
+  return needles.any((needle) => text.contains(needle));
+}
+
+Map<String, dynamic> _firstMap(List<dynamic> values) {
+  for (final value in values) {
+    if (value is Map && value.isNotEmpty) {
+      return value.cast<String, dynamic>();
+    }
+    if (value is List && value.isNotEmpty) {
+      for (final item in value) {
+        if (item is Map && item.isNotEmpty) {
+          return item.cast<String, dynamic>();
+        }
+      }
+    }
+  }
+  return {};
 }
 
 DateTime? _dateValue(dynamic value) {
