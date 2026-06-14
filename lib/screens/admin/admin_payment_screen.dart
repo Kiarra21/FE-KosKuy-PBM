@@ -70,38 +70,10 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
   }
 
   Future<String?> _askRejectReason(AdminPaymentItem item) async {
-    final controller = TextEditingController();
-    final reason = await showDialog<String>(
+    return showDialog<String>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Tolak pembayaran ${item.customerName}?'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Alasan penolakan',
-              hintText: 'Contoh: bukti blur atau nominal tidak sesuai',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop(controller.text.trim());
-              },
-              child: const Text('Tolak'),
-            ),
-          ],
-        );
-      },
+      builder: (_) => _RejectReasonDialog(customerName: item.customerName),
     );
-    controller.dispose();
-    return reason;
   }
 
   void _openProof(AdminPaymentItem item) {
@@ -235,6 +207,60 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
         bottomNavigationBar: const AdminBottomNav(selectedIndex: 2),
       ),
     );
+  }
+}
+
+class _RejectReasonDialog extends StatefulWidget {
+  const _RejectReasonDialog({required this.customerName});
+
+  final String customerName;
+
+  @override
+  State<_RejectReasonDialog> createState() => _RejectReasonDialogState();
+}
+
+class _RejectReasonDialogState extends State<_RejectReasonDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Tolak pembayaran ${widget.customerName}?'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLines: 3,
+        textInputAction: TextInputAction.done,
+        decoration: const InputDecoration(
+          labelText: 'Alasan penolakan',
+          hintText: 'Contoh: bukti blur atau nominal tidak sesuai',
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Batal'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Tolak')),
+      ],
+    );
+  }
+
+  void _submit() {
+    Navigator.of(context).pop(_controller.text.trim());
   }
 }
 
