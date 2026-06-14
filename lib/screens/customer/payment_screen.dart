@@ -5,10 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_colors.dart';
-import '../../widgets/app_top_notification.dart';
 import '../../models/booking_item.dart';
 import '../../providers/booking_provider.dart';
 import '../../routes/slide_page_route.dart';
+import '../../services/branch_service.dart';
+import '../../widgets/app_top_notification.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
 import 'booking_history_screen.dart';
@@ -26,14 +27,33 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   File? _pickedImage;
+  String? _qrisCodeUrl;
   bool _uploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadBranchQris();
+    });
+  }
+
+  Future<void> _loadBranchQris() async {
+    if (widget.booking.qrisCodeUrl.isNotEmpty || widget.booking.branchId <= 0) {
+      return;
+    }
+    try {
+      final branch = await const BranchService().fetchBranch(
+        widget.booking.branchId,
+      );
+      if (!mounted || branch.qrisCodeUrl.isEmpty) return;
+      setState(() => _qrisCodeUrl = branch.qrisCodeUrl);
+    } catch (_) {}
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: source,
-      imageQuality: 85,
-    );
+    final picked = await picker.pickImage(source: source, imageQuality: 85);
     if (picked != null && mounted) {
       setState(() => _pickedImage = File(picked.path));
     }
@@ -62,10 +82,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             const SizedBox(height: 16),
             ListTile(
-              leading: const Icon(Icons.camera_alt_rounded, color: AppColors.navy),
+              leading: const Icon(
+                Icons.camera_alt_rounded,
+                color: AppColors.navy,
+              ),
               title: const Text(
                 'Kamera',
-                style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               onTap: () {
                 Navigator.of(context).pop();
@@ -73,10 +99,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded, color: AppColors.navy),
+              leading: const Icon(
+                Icons.photo_library_rounded,
+                color: AppColors.navy,
+              ),
               title: const Text(
                 'Galeri',
-                style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               onTap: () {
                 Navigator.of(context).pop();
@@ -175,7 +207,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _PaymentCard(booking: booking),
+                    _PaymentCard(
+                      booking: booking,
+                      qrisCodeUrl: _qrisCodeUrl ?? booking.qrisCodeUrl,
+                    ),
                     const SizedBox(height: 14),
                     if (booking.isUnpaid)
                       _UploadSection(
@@ -252,9 +287,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 icon: Icons.account_circle_rounded,
                 selected: false,
                 onTap: () {
-                  Navigator.of(context).push(
-                    SlidePageRoute(child: const ProfileScreen()),
-                  );
+                  Navigator.of(
+                    context,
+                  ).push(SlidePageRoute(child: const ProfileScreen()));
                 },
               ),
             ],
@@ -270,13 +305,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
 // ──────────────────────────────────────────
 
 class _PaymentCard extends StatelessWidget {
-  const _PaymentCard({required this.booking});
+  const _PaymentCard({required this.booking, required this.qrisCodeUrl});
 
   final BookingItem booking;
+  final String qrisCodeUrl;
 
   @override
   Widget build(BuildContext context) {
-    final hasQris = booking.qrisCodeUrl.isNotEmpty;
+    final hasQris = qrisCodeUrl.isNotEmpty;
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
       decoration: BoxDecoration(
@@ -289,7 +325,11 @@ class _PaymentCard extends StatelessWidget {
           // Header
           Row(
             children: [
-              const Icon(Icons.receipt_long_rounded, color: AppColors.gold, size: 16),
+              const Icon(
+                Icons.receipt_long_rounded,
+                color: AppColors.gold,
+                size: 16,
+              ),
               const SizedBox(width: 6),
               Text(
                 booking.kosName,
@@ -331,7 +371,7 @@ class _PaymentCard extends StatelessWidget {
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: Image.network(
-                        booking.qrisCodeUrl,
+                        qrisCodeUrl,
                         width: 190,
                         height: 190,
                         fit: BoxFit.contain,
@@ -494,10 +534,7 @@ class _UploadSection extends StatelessWidget {
               child: pickedImage != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(9),
-                      child: Image.file(
-                        pickedImage!,
-                        fit: BoxFit.cover,
-                      ),
+                      child: Image.file(pickedImage!, fit: BoxFit.cover),
                     )
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -528,7 +565,11 @@ class _UploadSection extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.swap_horiz_rounded, size: 13, color: AppColors.navy.withValues(alpha: .5)),
+                  Icon(
+                    Icons.swap_horiz_rounded,
+                    size: 13,
+                    color: AppColors.navy.withValues(alpha: .5),
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Ganti foto',
@@ -551,7 +592,9 @@ class _UploadSection extends StatelessWidget {
             height: 40,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: uploading ? AppColors.navy.withValues(alpha: .4) : AppColors.gold,
+                backgroundColor: uploading
+                    ? AppColors.navy.withValues(alpha: .4)
+                    : AppColors.gold,
                 foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -569,7 +612,10 @@ class _UploadSection extends StatelessWidget {
                     )
                   : const Text(
                       'Kirim Bukti Pembayaran',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
             ),
           ),

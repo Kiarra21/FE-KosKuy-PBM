@@ -304,7 +304,7 @@ class _HistoryContent extends StatelessWidget {
                               setSheetState(() => submitting = true);
                               final provider = context.read<BookingProvider>();
                               final success = await provider.submitReview(
-                                bookingId: item.id,
+                                bookingId: item.reviewBookingId,
                                 rating: rating,
                                 comment: commentController.text.trim().isEmpty
                                     ? null
@@ -321,7 +321,8 @@ class _HistoryContent extends StatelessWidget {
                               } else {
                                 showAppTopNotification(
                                   context,
-                                  message: provider.errorMessage ??
+                                  message:
+                                      provider.actionErrorMessage ??
                                       'Gagal mengirim ulasan.',
                                   type: AppNotificationType.error,
                                 );
