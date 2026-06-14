@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/app_colors.dart';
+import 'app_top_notification.dart';
 import '../models/kos_item.dart';
 import '../providers/booking_provider.dart';
 import '../routes/slide_page_route.dart';
@@ -307,11 +308,10 @@ class _BookingSheetState extends State<BookingSheet> {
                         );
                         if (!context.mounted) return;
                         if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Pemesanan berhasil dibuat!'),
-                              backgroundColor: Colors.green,
-                            ),
+                          showAppTopNotification(
+                            context,
+                            message: 'Pemesanan berhasil dibuat!',
+                            type: AppNotificationType.success,
                           );
                           widget.onClose();
                           Navigator.of(context).pushReplacement(
@@ -320,11 +320,10 @@ class _BookingSheetState extends State<BookingSheet> {
                         } else {
                           final err = bookingProvider.errorMessage ??
                               'Gagal membuat pesanan.';
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(err),
-                              backgroundColor: Colors.red,
-                            ),
+                          showAppTopNotification(
+                            context,
+                            message: err,
+                            type: AppNotificationType.error,
                           );
                         }
                       },

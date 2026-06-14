@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
+import '../../widgets/app_top_notification.dart';
 import '../../models/booking_item.dart';
 import '../../providers/booking_provider.dart';
 import '../../routes/slide_page_route.dart';
@@ -302,7 +303,6 @@ class _HistoryContent extends StatelessWidget {
                           : () async {
                               setSheetState(() => submitting = true);
                               final provider = context.read<BookingProvider>();
-                              final messenger = ScaffoldMessenger.of(context);
                               final success = await provider.submitReview(
                                 bookingId: item.id,
                                 rating: rating,
@@ -313,21 +313,17 @@ class _HistoryContent extends StatelessWidget {
                               if (!builderContext.mounted) return;
                               Navigator.of(builderContext).pop();
                               if (success) {
-                                messenger.showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Ulasan berhasil dikirim!'),
-                                    backgroundColor: AppColors.navy,
-                                  ),
+                                showAppTopNotification(
+                                  context,
+                                  message: 'Ulasan berhasil dikirim!',
+                                  type: AppNotificationType.success,
                                 );
                               } else {
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      provider.errorMessage ??
-                                          'Gagal mengirim ulasan.',
-                                    ),
-                                    backgroundColor: Colors.red,
-                                  ),
+                                showAppTopNotification(
+                                  context,
+                                  message: provider.errorMessage ??
+                                      'Gagal mengirim ulasan.',
+                                  type: AppNotificationType.error,
                                 );
                               }
                             },

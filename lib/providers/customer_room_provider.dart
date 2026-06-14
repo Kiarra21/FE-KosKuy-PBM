@@ -18,6 +18,14 @@ class CustomerRoomProvider extends ChangeNotifier {
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
 
+  void clear() {
+    _items = const [];
+    _details.clear();
+    _errorMessage = null;
+    _loading = false;
+    notifyListeners();
+  }
+
   /// Fetch daftar cabang kos (branches) untuk halaman home customer.
   Future<void> fetchRoomTypes({
     String? branchId,

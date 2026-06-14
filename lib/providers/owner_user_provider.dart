@@ -14,6 +14,12 @@ class OwnerUserProvider extends ChangeNotifier {
   List<ManagedUser> get users => _users;
   List<ManagedUser> get customers => _customers;
 
+  void clear() {
+    _users = const [];
+    _customers = const [];
+    notifyListeners();
+  }
+
   Future<List<ManagedUser>> fetchUsers({
     String? role,
     String? search,
