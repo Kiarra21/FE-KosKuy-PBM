@@ -4,14 +4,18 @@ import 'package:provider/provider.dart';
 import '../../core/api_config.dart';
 import '../../core/app_colors.dart';
 import '../../models/kos_item.dart';
+import '../../models/review_item.dart';
 import '../../providers/customer_room_provider.dart';
 import '../../routes/slide_page_route.dart';
+import '../../services/review_service.dart';
 import '../../widgets/booking_sheet.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/review_widgets.dart';
 import 'booking_history_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
+import 'review_screen.dart';
 import '../../services/room_service.dart';
 
 class DetailScreen extends StatefulWidget {
@@ -29,6 +33,7 @@ class _DetailScreenState extends State<DetailScreen> {
   KosItem? _detailItem;
   List<KosItem> _roomTypes = const [];
   KosItem? _selectedRoomType;
+  BranchReviewStats? _reviewStats;
 
   KosItem get _item => _detailItem ?? widget.item;
 
@@ -63,10 +68,18 @@ class _DetailScreenState extends State<DetailScreen> {
       );
     } catch (_) {}
 
+    BranchReviewStats? reviewStats;
+    try {
+      reviewStats = await const ReviewService().fetchBranchReviewStats(
+        widget.item.id,
+      );
+    } catch (_) {}
+
     if (!mounted) return;
     setState(() {
       if (item != null) _detailItem = item;
       _roomTypes = roomTypes;
+      _reviewStats = reviewStats;
       _loading = false;
     });
   }
@@ -361,6 +374,53 @@ class _DetailScreenState extends State<DetailScreen> {
                               ),
                             );
                           }),
+                        ],
+                        if (_reviewStats != null) ...[
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Ulasan Pengguna',
+                            style: TextStyle(
+                              color: AppColors.navy,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ReviewStatsSection(stats: _reviewStats!, showTitle: false),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 36,
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.navy,
+                                side: const BorderSide(
+                                  color: AppColors.navy,
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  SlidePageRoute(
+                                    child: ReviewScreen(
+                                      branchId: widget.item.id,
+                                      branchName: item.name,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Lihat Semua Review',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ],
                     ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -210,6 +211,12 @@ class AuthService {
         : (jsonDecode(response.body) as Map).cast<String, dynamic>();
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final session = AuthSession.fromJson(body);
+      if (!session.user.isActive) {
+        unawaited(AuthSessionStore.instance.clear());
+        throw const AuthException(
+          'Akun ini sedang nonaktif dan tidak bisa login.',
+        );
+      }
       AuthSessionStore.instance.save(session);
       return session;
     }
@@ -221,11 +228,16 @@ class AuthService {
         ? <String, dynamic>{}
         : (jsonDecode(response.body) as Map).cast<String, dynamic>();
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      return AuthUser.fromJson(
+      final user = AuthUser.fromJson(
         (body['data'] as Map?)?.cast<String, dynamic>() ??
             (body['user'] as Map?)?.cast<String, dynamic>() ??
             body,
       );
+      if (!user.isActive) {
+        unawaited(AuthSessionStore.instance.clear());
+        throw const AuthException('Akun ini sedang nonaktif.');
+      }
+      return user;
     }
     throw AuthException(_extractMessage(body));
   }

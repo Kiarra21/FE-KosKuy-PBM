@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/booking_item.dart';
 import '../services/auth_service.dart';
 import '../services/booking_service.dart';
+import '../services/review_service.dart';
 
 class BookingProvider extends ChangeNotifier {
   BookingProvider({BookingService service = const BookingService()})
@@ -82,6 +83,34 @@ class BookingProvider extends ChangeNotifier {
       return false;
     } catch (_) {
       _errorMessage = 'Gagal mengirim bukti pembayaran.';
+      return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> submitReview({
+    required int bookingId,
+    required int rating,
+    String? comment,
+  }) async {
+    _loading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await const ReviewService().submitReview(
+        bookingId: bookingId,
+        rating: rating,
+        comment: comment,
+      );
+      await fetchBookings();
+      return true;
+    } on AuthException catch (error) {
+      _errorMessage = error.message;
+      return false;
+    } catch (_) {
+      _errorMessage = 'Gagal mengirim ulasan.';
       return false;
     } finally {
       _loading = false;

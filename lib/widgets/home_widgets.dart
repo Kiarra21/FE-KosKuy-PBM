@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_colors.dart';
 import '../models/kos_item.dart';
+import 'review_widgets.dart';
 import 'common_widgets.dart';
 
 class HomeHeader extends StatelessWidget {
@@ -160,7 +161,10 @@ class KosCard extends StatelessWidget {
                               .map((facility) => FacilityChip(label: facility)),
                           if (item.facilities.length > 3)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.gold,
                                 borderRadius: BorderRadius.circular(10),
@@ -197,6 +201,26 @@ class KosCard extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
+                      if (item.reviewCount > 0) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            StarRatingDisplay(
+                              rating: item.averageRating,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${item.averageRating.toStringAsFixed(1)} (${item.reviewCount})',
+                              style: TextStyle(
+                                color: AppColors.white.withValues(alpha: .8),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Row(
                         children: [
