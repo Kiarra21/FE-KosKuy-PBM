@@ -24,7 +24,7 @@ class AuthUser {
       profilePicture: json['profile_picture'] == null
           ? null
           : '${json['profile_picture']}',
-      isActive: json['is_active'] is bool ? json['is_active'] as bool : true,
+      isActive: _boolValue(json['is_active'], fallback: true),
       branchId: json['branch_id'] is int
           ? json['branch_id'] as int
           : int.tryParse('${json['branch_id'] ?? ''}'),
@@ -54,4 +54,22 @@ class AuthUser {
       'branch_id': branchId,
     };
   }
+}
+
+bool _boolValue(dynamic value, {required bool fallback}) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final text = '${value ?? ''}'.trim().toLowerCase();
+  if (text.isEmpty || text == 'null') return fallback;
+  if (text == 'true' || text == '1' || text == 'yes' || text == 'aktif') {
+    return true;
+  }
+  if (text == 'false' ||
+      text == '0' ||
+      text == 'no' ||
+      text == 'nonaktif' ||
+      text == 'inactive') {
+    return false;
+  }
+  return fallback;
 }

@@ -92,6 +92,10 @@ class AuthSessionStore {
       final session = AuthSession.fromJson(
         (jsonDecode(rawSession) as Map).cast<String, dynamic>(),
       );
+      if (!session.user.isActive) {
+        await clear();
+        return null;
+      }
       _session = session;
       _expiresAt = expiresAt;
       return session;
