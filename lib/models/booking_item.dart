@@ -15,6 +15,7 @@ class BookingItem {
     required this.checkInDate,
     required this.checkOutDate,
     required this.notes,
+    required this.paymentProofUrl,
   });
 
   factory BookingItem.fromJson(Map<String, dynamic> json) {
@@ -36,6 +37,11 @@ class BookingItem {
     final rawQris =
         '${branch['qris_code_url'] ?? branch['qris_code'] ?? branch['qris'] ?? ''}';
     final qrisUrl = rawQris.isEmpty ? '' : ApiConfig.storageUrl(rawQris);
+
+    // Bukti pembayaran
+    final payment = (json['payment'] as Map?)?.cast<String, dynamic>();
+    final rawProof = '${payment?['proof_image_url'] ?? ''}';
+    final proofUrl = rawProof.isEmpty ? '' : ApiConfig.storageUrl(rawProof);
 
     // Harga total mentah
     final rawTotal = json['total'] ?? json['total_price'] ?? json['amount'];
@@ -67,6 +73,7 @@ class BookingItem {
         json['check_out_date'] ?? json['check_out'] ?? json['end_date'],
       ),
       notes: '${json['notes'] ?? ''}',
+      paymentProofUrl: proofUrl,
     );
   }
 
@@ -83,6 +90,7 @@ class BookingItem {
   final String checkInDate;
   final String checkOutDate;
   final String notes;
+  final String paymentProofUrl;
 
   bool get isCompleted => status == 'Selesai';
   bool get isPaid => status == 'Lunas' || isConfirmed || isCompleted;

@@ -57,7 +57,7 @@ class KosCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 215,
+      height: 225,
       margin: const EdgeInsets.only(bottom: 14),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -154,10 +154,27 @@ class KosCard extends StatelessWidget {
                       Wrap(
                         spacing: 4,
                         runSpacing: 4,
-                        children: item.facilities
-                            .take(4)
-                            .map((facility) => FacilityChip(label: facility))
-                            .toList(),
+                        children: [
+                          ...item.facilities
+                              .take(3)
+                              .map((facility) => FacilityChip(label: facility)),
+                          if (item.facilities.length > 3)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.gold,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '+${item.facilities.length - 3}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       Text.rich(
