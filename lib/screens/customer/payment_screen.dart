@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_colors.dart';
+import '../../widgets/app_top_notification.dart';
 import '../../models/booking_item.dart';
 import '../../providers/booking_provider.dart';
 import '../../routes/slide_page_route.dart';
@@ -91,11 +92,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> _submitPayment() async {
     final image = _pickedImage;
     if (image == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih bukti pembayaran terlebih dahulu.'),
-          backgroundColor: Colors.red,
-        ),
+      showAppTopNotification(
+        context,
+        message: 'Pilih bukti pembayaran terlebih dahulu.',
+        type: AppNotificationType.error,
       );
       return;
     }
@@ -117,11 +117,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() => _uploading = false);
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bukti pembayaran berhasil dikirim!'),
-          backgroundColor: Colors.green,
-        ),
+      showAppTopNotification(
+        context,
+        message: 'Bukti pembayaran berhasil dikirim!',
+        type: AppNotificationType.success,
       );
       await Future.delayed(const Duration(milliseconds: 800));
       if (mounted) {
@@ -132,11 +131,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     } else {
       final err = context.read<BookingProvider>().errorMessage;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(err ?? 'Gagal mengirim bukti pembayaran.'),
-          backgroundColor: Colors.red,
-        ),
+      showAppTopNotification(
+        context,
+        message: err ?? 'Gagal mengirim bukti pembayaran.',
+        type: AppNotificationType.error,
       );
     }
   }
