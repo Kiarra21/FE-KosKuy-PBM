@@ -18,6 +18,13 @@ class BookingProvider extends ChangeNotifier {
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
 
+  void clear() {
+    _items = const [];
+    _errorMessage = null;
+    _loading = false;
+    notifyListeners();
+  }
+
   Future<void> fetchBookings({int page = 1}) async {
     _loading = true;
     _errorMessage = null;

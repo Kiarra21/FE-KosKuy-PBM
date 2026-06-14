@@ -22,6 +22,14 @@ class OwnerRoomProvider extends ChangeNotifier {
   List<FacilityItem> facilitiesFor(int roomTypeId) =>
       _facilities[roomTypeId] ?? const [];
 
+  void clear() {
+    _roomTypes.clear();
+    _rooms.clear();
+    _photos.clear();
+    _facilities.clear();
+    notifyListeners();
+  }
+
   Future<List<ManagedRoomType>> fetchRoomTypes(int branchId) async {
     final items = await _service.fetchRoomTypes(branchId);
     _roomTypes[branchId] = items;

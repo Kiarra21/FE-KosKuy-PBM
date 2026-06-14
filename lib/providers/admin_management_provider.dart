@@ -27,6 +27,16 @@ class AdminManagementProvider extends ChangeNotifier {
   String? get paymentError => _paymentError;
   int? get adminBranchId => AuthSessionStore.instance.user?.branchId;
 
+  void clear() {
+    _bookings = const [];
+    _payments = const [];
+    _loadingBookings = false;
+    _loadingPayments = false;
+    _bookingError = null;
+    _paymentError = null;
+    notifyListeners();
+  }
+
   Future<void> fetchBookings({String? status}) async {
     _loadingBookings = true;
     _bookingError = null;

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../core/api_config.dart';
 import '../core/app_colors.dart';
+import '../core/provider_scope.dart';
 import '../models/auth_user.dart';
 import '../providers/profile_provider.dart';
 import '../services/auth_service.dart';
@@ -52,6 +53,7 @@ class _ProfileShellState extends State<ProfileShell> {
   Future<void> _logout() async {
     await context.read<ProfileProvider>().logout();
     if (!mounted) return;
+    clearAllProviders(context);
     widget.onLoggedOut(context);
   }
 
