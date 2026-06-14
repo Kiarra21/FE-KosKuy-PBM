@@ -7,6 +7,7 @@ import '../models/auth_session.dart';
 import '../models/branch_item.dart';
 import '../models/branch_photo_item.dart';
 import '../models/facility_item.dart';
+
 import 'auth_service.dart';
 
 class BranchService {
@@ -41,6 +42,7 @@ class BranchService {
 
     // Fetch semua room types sekaligus untuk hitung min price & room_size per branch
     final minValues = await _fetchRoomTypeMinValues();
+
     return branches.map((branch) {
       final mins = minValues[branch.id];
       if (mins == null) return branch;

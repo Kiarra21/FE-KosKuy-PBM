@@ -429,7 +429,7 @@ class RoomTypeOption extends StatelessWidget {
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: selected ? AppColors.white : AppColors.gold,
+        color: selected ? AppColors.gold : AppColors.white,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -442,7 +442,7 @@ class RoomTypeOption extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: selected ? AppColors.navy : AppColors.white,
+                    color: selected ? AppColors.white : AppColors.navy,
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
                   ),
@@ -451,7 +451,11 @@ class RoomTypeOption extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: soldOut ? Colors.red : AppColors.navy,
+                    color: soldOut
+                        ? Colors.red
+                        : selected
+                            ? AppColors.white.withValues(alpha: .8)
+                            : AppColors.navy.withValues(alpha: .6),
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                   ),
@@ -459,10 +463,28 @@ class RoomTypeOption extends StatelessWidget {
               ],
             ),
           ),
+          if (selected) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: .25),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'Dipilih',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Text(
             price,
             style: TextStyle(
-              color: selected ? AppColors.gold : AppColors.navy,
+              color: selected ? AppColors.navy : AppColors.gold,
               fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
