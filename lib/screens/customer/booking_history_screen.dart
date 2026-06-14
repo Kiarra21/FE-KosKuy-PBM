@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../core/app_colors.dart';
 import '../../models/booking_item.dart';
 import '../../providers/booking_provider.dart';
@@ -8,6 +7,7 @@ import '../../routes/slide_page_route.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/history_widgets.dart';
 import '../../widgets/home_widgets.dart';
+import '../../widgets/review_widgets.dart';
 import 'booking_detail_screen.dart';
 import 'home_screen.dart';
 import 'payment_screen.dart';
@@ -167,29 +167,302 @@ class _HistoryContent extends StatelessWidget {
           item: item,
           status: item.status,
           statusColor: statusColor,
-          actionLabel: item.isCompleted
+          actionLabel: item.isCompleted && item.hasReview
+              ? 'Lihat Review'
+              : item.isCompleted && !item.hasReview
               ? 'Review'
               : item.isUnpaid
               ? 'Bayar Sekarang'
               : '',
           onAction: () {
             if (item.isUnpaid) {
-              Navigator.of(context).push(
-                SlidePageRoute(child: PaymentScreen(booking: item)),
-              );
+              Navigator.of(
+                context,
+              ).push(SlidePageRoute(child: PaymentScreen(booking: item)));
+            } else if (item.isCompleted && !item.hasReview) {
+              _showReviewDialog(context, item);
+            } else if (item.isCompleted && item.hasReview) {
+              _showReviewDetail(context, item);
             }
           },
           onDetail: () {
             Navigator.of(context).push(
-              SlidePageRoute(child: BookingDetailScreen(
-                booking: item,
-                statusColor: statusColor,
-              )),
+              SlidePageRoute(
+                child: BookingDetailScreen(
+                  booking: item,
+                  statusColor: statusColor,
+                ),
+              ),
             );
           },
           cancelled: item.isCancelled,
         );
       }).toList(),
+    );
+  }
+
+  void _showReviewDialog(BuildContext context, BookingItem item) {
+    int rating = 0;
+    final commentController = TextEditingController();
+    bool submitting = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (builderContext, setSheetState) {
+            return Container(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                20 + MediaQuery.of(builderContext).viewInsets.bottom,
+              ),
+              decoration: const BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.navy.withValues(alpha: .15),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Beri Ulasan',
+                    style: TextStyle(
+                      color: AppColors.navy,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.kosName,
+                    style: TextStyle(
+                      color: AppColors.navy.withValues(alpha: .6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  StarRatingSelector(
+                    rating: rating,
+                    onChanged: (value) {
+                      setSheetState(() => rating = value);
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: commentController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Tulis komentar (opsional)',
+                      hintStyle: TextStyle(
+                        color: AppColors.navy.withValues(alpha: .35),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.navy.withValues(alpha: .05),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.all(12),
+                    ),
+                    style: const TextStyle(
+                      color: AppColors.navy,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 42,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.gold,
+                        foregroundColor: AppColors.navy,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: rating == 0 || submitting
+                          ? null
+                          : () async {
+                              setSheetState(() => submitting = true);
+                              final provider = context.read<BookingProvider>();
+                              final messenger = ScaffoldMessenger.of(context);
+                              final success = await provider.submitReview(
+                                bookingId: item.id,
+                                rating: rating,
+                                comment: commentController.text.trim().isEmpty
+                                    ? null
+                                    : commentController.text.trim(),
+                              );
+                              if (!builderContext.mounted) return;
+                              Navigator.of(builderContext).pop();
+                              if (success) {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Ulasan berhasil dikirim!'),
+                                    backgroundColor: AppColors.navy,
+                                  ),
+                                );
+                              } else {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      provider.errorMessage ??
+                                          'Gagal mengirim ulasan.',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                      child: submitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.navy,
+                              ),
+                            )
+                          : const Text(
+                              'Kirim Ulasan',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showReviewDetail(BuildContext context, BookingItem item) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.navy.withValues(alpha: .15),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Ulasan Kamu',
+                style: TextStyle(
+                  color: AppColors.navy,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item.kosName,
+                style: TextStyle(
+                  color: AppColors.navy.withValues(alpha: .6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              StarRatingDisplay(rating: item.reviewRating.toDouble(), size: 28),
+              const SizedBox(height: 6),
+              Text(
+                '${item.reviewRating}/5',
+                style: const TextStyle(
+                  color: AppColors.navy,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              if (item.reviewComment.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.navy.withValues(alpha: .05),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    item.reviewComment,
+                    style: TextStyle(
+                      color: AppColors.navy.withValues(alpha: .8),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+              if (item.reviewCreatedAt.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Dikirim pada ${item.reviewCreatedAt}',
+                  style: TextStyle(
+                    color: AppColors.navy.withValues(alpha: .4),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.navy,
+                    foregroundColor: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  child: const Text(
+                    'Tutup',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
