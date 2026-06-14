@@ -19,17 +19,75 @@ class ReviewService {
     required int rating,
     String? comment,
   }) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}/reviews');
-    final response = await _post(uri, {
+    final body = {
       'booking_id': bookingId,
       'rating': rating,
       if (comment != null && comment.trim().isNotEmpty) 'comment': comment,
-    });
-    final body = _decode(response);
-    final payload = body['data'];
+    };
+    http.Response response;
+    try {
+      response = await _post(Uri.parse('${ApiConfig.baseUrl}/reviews'), body);
+    } on AuthException catch (error) {
+      if (!_shouldTryBookingReviewEndpoint(error.message)) rethrow;
+      response = await _postWithFallbacks(bookingId, body, error);
+    }
+    final responseBody = _decode(response);
+    final payload = responseBody['data'];
     return ReviewItem.fromJson(
-      (payload is Map ? payload : body).cast<String, dynamic>(),
+      (payload is Map ? payload : responseBody).cast<String, dynamic>(),
     );
+  }
+
+  Future<http.Response> _postWithFallbacks(
+    int bookingId,
+    Map<String, dynamic> body,
+    AuthException firstError,
+  ) async {
+    AuthException lastError = firstError;
+    final nestedBody = Map<String, dynamic>.from(body)..remove('booking_id');
+    final attempts = [
+      ('/bookings/$bookingId/reviews', nestedBody),
+      ('/bookings/$bookingId/review', nestedBody),
+      ('/bookings/$bookingId/reviews', body),
+      ('/bookings/$bookingId/review', body),
+    ];
+    for (final attempt in attempts) {
+      try {
+        return await _post(
+          Uri.parse('${ApiConfig.baseUrl}${attempt.$1}'),
+          attempt.$2,
+        );
+      } on AuthException catch (error) {
+        lastError = error;
+      }
+    }
+    if (_shouldTryBookingReviewEndpoint(firstError.message)) {
+      throw AuthException(_reviewAccessMessage(firstError.message));
+    }
+    throw AuthException(_reviewAccessMessage(lastError.message));
+  }
+
+  bool _shouldTryBookingReviewEndpoint(String message) {
+    final text = message.toLowerCase();
+    return text.contains('akses') ||
+        text.contains('access') ||
+        text.contains('forbidden') ||
+        text.contains('unauthorized') ||
+        text.contains('tidak ditemukan') ||
+        text.contains('not found') ||
+        text.contains('route') ||
+        text.contains('endpoint');
+  }
+
+  String _reviewAccessMessage(String message) {
+    final text = message.toLowerCase();
+    if (text.contains('akses') ||
+        text.contains('access') ||
+        text.contains('forbidden') ||
+        text.contains('unauthorized')) {
+      return 'Ulasan hanya bisa dikirim oleh customer pemilik pesanan yang sudah selesai.';
+    }
+    return message;
   }
 
   Future<BranchReviewStats> fetchBranchReviewStats(int branchId) async {

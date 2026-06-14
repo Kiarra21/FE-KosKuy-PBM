@@ -13,14 +13,17 @@ class BookingProvider extends ChangeNotifier {
   List<BookingItem> _items = const [];
   bool _loading = false;
   String? _errorMessage;
+  String? _actionErrorMessage;
 
   List<BookingItem> get items => _items;
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
+  String? get actionErrorMessage => _actionErrorMessage;
 
   void clear() {
     _items = const [];
     _errorMessage = null;
+    _actionErrorMessage = null;
     _loading = false;
     notifyListeners();
   }
@@ -28,6 +31,7 @@ class BookingProvider extends ChangeNotifier {
   Future<void> fetchBookings({int page = 1}) async {
     _loading = true;
     _errorMessage = null;
+    _actionErrorMessage = null;
     notifyListeners();
     try {
       _items = await _service.fetchBookings(page: page);
@@ -49,6 +53,7 @@ class BookingProvider extends ChangeNotifier {
   }) async {
     _loading = true;
     _errorMessage = null;
+    _actionErrorMessage = null;
     notifyListeners();
     try {
       await _service.createBooking(
@@ -77,6 +82,7 @@ class BookingProvider extends ChangeNotifier {
   }) async {
     _loading = true;
     _errorMessage = null;
+    _actionErrorMessage = null;
     notifyListeners();
     try {
       await _service.submitPayment(
@@ -102,8 +108,7 @@ class BookingProvider extends ChangeNotifier {
     required int rating,
     String? comment,
   }) async {
-    _loading = true;
-    _errorMessage = null;
+    _actionErrorMessage = null;
     notifyListeners();
     try {
       await const ReviewService().submitReview(
@@ -114,14 +119,13 @@ class BookingProvider extends ChangeNotifier {
       await fetchBookings();
       return true;
     } on AuthException catch (error) {
-      _errorMessage = error.message;
+      _actionErrorMessage = error.message;
+      notifyListeners();
       return false;
     } catch (_) {
-      _errorMessage = 'Gagal mengirim ulasan.';
-      return false;
-    } finally {
-      _loading = false;
+      _actionErrorMessage = 'Gagal mengirim ulasan.';
       notifyListeners();
+      return false;
     }
   }
 }

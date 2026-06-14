@@ -6,7 +6,7 @@ import 'review_widgets.dart';
 import 'common_widgets.dart';
 
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({super.key, this.showNotification = true});
+  const HomeHeader({super.key, this.showNotification = false});
 
   final bool showNotification;
 

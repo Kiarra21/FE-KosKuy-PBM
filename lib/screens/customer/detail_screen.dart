@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_config.dart';
 import '../../core/app_colors.dart';
@@ -8,6 +9,8 @@ import '../../models/review_item.dart';
 import '../../providers/customer_room_provider.dart';
 import '../../routes/slide_page_route.dart';
 import '../../services/review_service.dart';
+import '../../widgets/app_top_notification.dart';
+import '../../widgets/branch_map_widget.dart';
 import '../../widgets/booking_sheet.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/home_widgets.dart';
@@ -36,6 +39,9 @@ class _DetailScreenState extends State<DetailScreen> {
   BranchReviewStats? _reviewStats;
 
   KosItem get _item => _detailItem ?? widget.item;
+
+  double? get _mapLatitude => double.tryParse(_item.latitude);
+  double? get _mapLongitude => double.tryParse(_item.longitude);
 
   @override
   void initState() {
@@ -82,6 +88,40 @@ class _DetailScreenState extends State<DetailScreen> {
       _reviewStats = reviewStats;
       _loading = false;
     });
+  }
+
+  Future<void> _openMaps() async {
+    final latitude = _mapLatitude;
+    final longitude = _mapLongitude;
+    if (latitude == null || longitude == null) {
+      showAppTopNotification(
+        context,
+        message: 'Koordinat lokasi belum tersedia.',
+      );
+      return;
+    }
+    final encodedName = Uri.encodeComponent(_item.name);
+    final googleUri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+    );
+    final geoUri = Uri.parse('geo:0,0?q=$latitude,$longitude($encodedName)');
+    try {
+      final openedGoogle = await launchUrl(
+        googleUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (openedGoogle) return;
+      final openedGeo = await launchUrl(
+        geoUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (openedGeo) return;
+    } catch (_) {}
+    if (!mounted) return;
+    showAppTopNotification(
+      context,
+      message: 'Tidak bisa membuka aplikasi Maps.',
+    );
   }
 
   @override
@@ -157,6 +197,13 @@ class _DetailScreenState extends State<DetailScreen> {
                             }
                           },
                         ),
+                        const SizedBox(height: 14),
+                        BranchLocationPreview(
+                          item: item,
+                          latitude: _mapLatitude,
+                          longitude: _mapLongitude,
+                          onTap: _openMaps,
+                        ),
                         if (_roomTypes.isNotEmpty) ...[
                           const SizedBox(height: 20),
                           const Text(
@@ -182,7 +229,9 @@ class _DetailScreenState extends State<DetailScreen> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.navy.withValues(alpha: .04),
+                                    color: AppColors.navy.withValues(
+                                      alpha: .04,
+                                    ),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -198,31 +247,39 @@ class _DetailScreenState extends State<DetailScreen> {
                                         scrollDirection: Axis.horizontal,
                                         physics: const BouncingScrollPhysics(),
                                         itemCount: roomType.photos.length,
-                                        separatorBuilder: (context, index) => const SizedBox(width: 8),
+                                        separatorBuilder: (context, index) =>
+                                            const SizedBox(width: 8),
                                         itemBuilder: (context, index) {
-                                          final photoUrl = roomType.photos[index];
-                                          final cleanUrl = photoUrl.startsWith('http')
+                                          final photoUrl =
+                                              roomType.photos[index];
+                                          final cleanUrl =
+                                              photoUrl.startsWith('http')
                                               ? photoUrl
                                               : ApiConfig.storageUrl(photoUrl);
                                           return ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             child: Image.network(
                                               cleanUrl,
                                               width: 165,
                                               height: 110,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return Container(
-                                                  width: 165,
-                                                  height: 110,
-                                                  color: const Color(0xFFEFEDEA),
-                                                  child: const Icon(
-                                                    Icons.bed_rounded,
-                                                    color: AppColors.gold,
-                                                    size: 32,
-                                                  ),
-                                                );
-                                              },
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return Container(
+                                                      width: 165,
+                                                      height: 110,
+                                                      color: const Color(
+                                                        0xFFEFEDEA,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.bed_rounded,
+                                                        color: AppColors.gold,
+                                                        size: 32,
+                                                      ),
+                                                    );
+                                                  },
                                             ),
                                           );
                                         },
@@ -237,24 +294,26 @@ class _DetailScreenState extends State<DetailScreen> {
                                         width: double.infinity,
                                         height: 110,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            width: double.infinity,
-                                            height: 110,
-                                            color: const Color(0xFFEFEDEA),
-                                            child: const Icon(
-                                              Icons.bed_rounded,
-                                              color: AppColors.gold,
-                                              size: 32,
-                                            ),
-                                          );
-                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Container(
+                                                width: double.infinity,
+                                                height: 110,
+                                                color: const Color(0xFFEFEDEA),
+                                                child: const Icon(
+                                                  Icons.bed_rounded,
+                                                  color: AppColors.gold,
+                                                  size: 32,
+                                                ),
+                                              );
+                                            },
                                       ),
                                     ),
                                     const SizedBox(height: 12),
                                   ],
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
                                         child: Text(
@@ -279,7 +338,11 @@ class _DetailScreenState extends State<DetailScreen> {
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      const Icon(Icons.square_foot, color: AppColors.gold, size: 12),
+                                      const Icon(
+                                        Icons.square_foot,
+                                        color: AppColors.gold,
+                                        size: 12,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         'Luas: ${roomType.area}',
@@ -291,9 +354,13 @@ class _DetailScreenState extends State<DetailScreen> {
                                       ),
                                       const Spacer(),
                                       Text(
-                                        isSoldOut ? 'Habis' : 'Sisa ${roomType.availableRooms} Kamar',
+                                        isSoldOut
+                                            ? 'Habis'
+                                            : 'Sisa ${roomType.availableRooms} Kamar',
                                         style: TextStyle(
-                                          color: isSoldOut ? Colors.red : Colors.green,
+                                          color: isSoldOut
+                                              ? Colors.red
+                                              : Colors.green,
                                           fontSize: 11,
                                           fontWeight: FontWeight.w800,
                                         ),
@@ -307,7 +374,9 @@ class _DetailScreenState extends State<DetailScreen> {
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        color: AppColors.navy.withValues(alpha: .72),
+                                        color: AppColors.navy.withValues(
+                                          alpha: .72,
+                                        ),
                                         fontSize: 11,
                                         height: 1.4,
                                         fontWeight: FontWeight.w600,
@@ -320,24 +389,29 @@ class _DetailScreenState extends State<DetailScreen> {
                                       spacing: 4,
                                       runSpacing: 4,
                                       children: roomType.facilities
-                                          .map((fac) => Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6,
-                                                  vertical: 3,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.navy.withValues(alpha: .06),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  fac,
-                                                  style: const TextStyle(
-                                                    color: AppColors.navy,
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w800,
+                                          .map(
+                                            (fac) => Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 3,
                                                   ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.navy
+                                                    .withValues(alpha: .06),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                fac,
+                                                style: const TextStyle(
+                                                  color: AppColors.navy,
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w800,
                                                 ),
-                                              ))
+                                              ),
+                                            ),
+                                          )
                                           .toList(),
                                     ),
                                   ],
@@ -350,7 +424,9 @@ class _DetailScreenState extends State<DetailScreen> {
                                         backgroundColor: AppColors.navy,
                                         foregroundColor: AppColors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                       ),
                                       onPressed: isSoldOut
@@ -386,7 +462,10 @@ class _DetailScreenState extends State<DetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          ReviewStatsSection(stats: _reviewStats!, showTitle: false),
+                          ReviewStatsSection(
+                            stats: _reviewStats!,
+                            showTitle: false,
+                          ),
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
@@ -534,22 +613,24 @@ class _DetailImageState extends State<DetailImage> {
   Widget build(BuildContext context) {
     // Collect all valid photo paths/URLs
     final List<String> displayPhotos = [];
-    
+
     // Add all branch/room photos
     for (final photo in widget.photos) {
       if (photo.trim().isNotEmpty) {
         displayPhotos.add(photo.trim());
       }
     }
-    
+
     // Fallback to primary imageUrl if photos is empty
     if (displayPhotos.isEmpty && widget.imageUrl.trim().isNotEmpty) {
       displayPhotos.add(widget.imageUrl.trim());
     }
-    
+
     // Absolute fallback placeholder
     if (displayPhotos.isEmpty) {
-      displayPhotos.add('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80');
+      displayPhotos.add(
+        'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80',
+      );
     }
 
     return Column(
@@ -785,6 +866,159 @@ class DetailInfoCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class BranchLocationPreview extends StatelessWidget {
+  const BranchLocationPreview({
+    super.key,
+    required this.item,
+    required this.latitude,
+    required this.longitude,
+    required this.onTap,
+  });
+
+  final KosItem item;
+  final double? latitude;
+  final double? longitude;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final lat = latitude;
+    final lng = longitude;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Lokasi Cabang',
+          style: TextStyle(
+            color: AppColors.navy,
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.navy,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.navy.withValues(alpha: .08),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_rounded,
+                    color: AppColors.gold,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      item.address,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 11,
+                        height: 1.25,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (lat != null && lng != null)
+                Stack(
+                  children: [
+                    AbsorbPointer(
+                      child: BranchMapWidget(
+                        latitude: lat,
+                        longitude: lng,
+                        height: 178,
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(9),
+                          onTap: onTap,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 8,
+                      bottom: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.navy.withValues(alpha: .86),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.open_in_new_rounded,
+                              color: AppColors.gold,
+                              size: 12,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Buka Maps',
+                              style: TextStyle(
+                                color: AppColors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Container(
+                  height: 116,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.white.withValues(alpha: .08),
+                    borderRadius: BorderRadius.circular(9),
+                    border: Border.all(
+                      color: AppColors.white.withValues(alpha: .12),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Koordinat lokasi belum tersedia.',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
