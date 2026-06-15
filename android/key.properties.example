@@ -1,0 +1,4 @@
+storePassword=koskuya2
+keyPassword=koskuya2
+keyAlias=koskuyrelease
+storeFile=upload-keystore.jks
